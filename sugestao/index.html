@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Quatro Digital - Dashboard</title>
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+	<!--[if lt IE 9]>
+		<script src="//oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+		<script src="//oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+	<![endif]-->
+
+	<style>
+		.zsFormClass {background-color: #FFFFFF; width: 600px }
+		.zsFontClass {color: #000000; font-family: Arial; font-size: 13px }
+		.hleft {
+			text-align: left;
+		}
+
+		input[type=file]::-webkit-file-upload-button {
+			cursor: pointer;
+		}
+
+		.wtcsepcode {
+			margin: 0px 15px;
+			color: #aaa;
+			float: left;
+		}
+
+		.wtccloudattach {
+			float: left;
+			color: #00acda!important;
+			cursor: pointer;
+			text-decoration: none!important;
+		}
+
+		.wtccloudattach:hover {
+			text-decoration: none!important;
+		}
+
+		.wtcuploadinput {
+			cursor: pointer;
+			float: left;
+			width: 62px;
+			margin-top: -20px;
+			opacity: 0;
+			clear: both;
+		}
+
+		.wtcuploadfile {
+			float: left;
+			color: #00acda;
+		}
+
+		.filenamecls {
+			margin-right: 15px;
+			float: left;
+			margin-top: 5px;
+		}
+
+		.clboth {
+			clear: both;
+		}
+
+		#zsFileBrowseAttachments {
+			clear: both;
+			margin: 0px 0px 10px;
+		}
+
+		.zsFontClass {
+			vertical-align: top;
+		}
+
+		#tooltip-zc {
+			font: normal 12px Arial, Helvetica, sans-serif;
+			line-height: 18px;
+			position: absolute;
+			padding: 8px;
+			margin: 20px 0 0;
+			background: #fff;
+			border: 1px solid #528dd1;
+			-moz-border-radius: 5px;
+			-webkit-border-radius: 5px;
+			border-radius: 5px;
+			color: #eee;
+			-webkit-box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.2);
+			-moz-box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.2);
+			z-index: 10000;
+			color: #777
+		}
+
+		.wtcmanfield {
+			color: #f00;
+			font-size: 16px;
+			position: relative;
+			top: 2px;
+			left: 1px;
+		}
+
+		#zsCloudAttachmentIframe {
+			width: 100%;
+			height: 100%;
+			z-index: 99999!important;
+			position: fixed;
+			left: 0px;
+			top: 0px;
+			border-style: none;
+			display: none;
+			background-color: #fff;
+		}
+
+		.wtchelpinfo {
+			background-position: -246px -485px;
+			width: 15px;
+			height: 15px;
+			display: inline-block;
+			position: relative;
+			top: 2px;
+			background-image: url('http://css.zohostatic.com/support/754814/images/zs-mpro.png');
+		}
+	</style>
+	<script src='http://js.zohostatic.com/support/static/jquery-1.8.3.min.js'></script>
+	<script src='http://js.zohostatic.com/support/fbw_v1/jquery.encoder.min.js'></script>
+	<script>
+		var zctt = function() {var tt, mw = 400, top = 10, left = 0, doctt = document; var ieb = doctt.all ? true : false; return {showtt: function(cont, wid) {if (tt == null) {tt = doctt.createElement('div'); tt.setAttribute('id', 'tooltip-zc'); doctt.body.appendChild(tt); doctt.onmousemove = this.setpos; doctt.onclick = this.hidett; } tt.style.display = 'block'; tt.innerHTML = cont; tt.style.width = wid ? wid + 'px' : 'auto'; if (!wid && ieb) {tt.style.width = tt.offsetWidth; } if (tt.offsetWidth > mw) {tt.style.width = mw + 'px'} h = parseInt(tt.offsetHeight) + top; w = parseInt(tt.offsetWidth) + left; }, hidett: function() {tt.style.display = 'none'; }, setpos: function(e) {var u = ieb ? event.clientY + doctt.body.scrollTop : e.pageY; var l = ieb ? event.clientX + doctt.body.scrollLeft : e.pageX; var cw = doctt.body.clientWidth; var ch = doctt.body.clientHeight; if (l < 0) {tt.style.left = left + 'px'; tt.style.right = ''; } else if ((l + w + left) > cw) {tt.style.left = ''; tt.style.right = ((cw - l) + left) + 'px'; } else {tt.style.right = ''; tt.style.left = (l + left) + 'px'; } if (u < 0) {tt.style.top = top + 'px'; tt.style.bottom = ''; } else if ((u + h + left) > ch) {tt.style.top = ''; tt.style.bottom = ((ch - u) + top) + 'px'; } else {tt.style.bottom = ''; tt.style.top = (u + top) + 'px'; } } }; }(); var zsWebFormMandatoryFields = new Array('Contact Name', 'Email', 'Subject'); var zsFieldsDisplayLabelArray = new Array('Sobrenome', 'E-mail', 'Assunto'); function zsValidateMandatoryFields() {var name = ''; var email = ''; var isError = 0; for (var index = 0; index < zsWebFormMandatoryFields.length; index++) {isError = 0; var fieldObject = document.forms['zsWebToCase_106622000000124059'][zsWebFormMandatoryFields[index]]; if (fieldObject) {if (((fieldObject.value).replace(/^\s+|\s+$/g, '')).length == 0) {alert(zsFieldsDisplayLabelArray[index] + ' não pode ficar em branco '); fieldObject.focus(); isError = 1; return false; } else {if (fieldObject.name == 'Email') {if (!fieldObject.value.match(/[A-Za-z0-9._%\-+]+@[A-Za-z0-9.\-]+\.[a-zA-Z]{2,22}/)) {isError = 1; alert('Insira uma ID de e-mail válida'); fieldObject.focus(); return false; } } } if (fieldObject.nodeName == 'SELECT') {if (fieldObject.options[fieldObject.selectedIndex].value == '-None-') {alert(zsFieldsDisplayLabelArray[index] + ' não pode ser vazio'); fieldObject.focus(); isError = 1; return false; } } if (fieldObject.type == 'checkbox') {if (fieldObject.checked == false) {alert('Por favor, aceite ' + zsFieldsDisplayLabelArray[index]); fieldObject.focus(); isError = 1; return false; } } } } if (isError == 0) {document.getElementById('zsSubmitButton_106622000000124059').setAttribute('disabled', 'disabled'); } } function zsResetWebForm(webFormId) {document.forms['zsWebToCase_' + webFormId].reset(); document.getElementById('zsSubmitButton_106622000000124059').removeAttribute('disabled'); }
+	</script>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-12">
+				<div class="text-center">
+					<h1><a href="http://www.quatrodigital.com.br" title="Quatro Digital - Melhor agência VTEX"><img src="../img/logo_quatro_800x328.png" alt="Quatro Digital" class="img-responsive center-block"></a></h1>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id='zohoSupportWebToCase' align='center'>
+		<form name='zsWebToCase_106622000000124059' id='zsWebToCase_106622000000124059' action='https://support.zoho.com/support/WebToCase' method='POST' onSubmit='return zsValidateMandatoryFields()' enctype='multipart/form-data'> <input type='hidden' name='xnQsjsdp' value='vDcnlrPAVPxthYo*kRl79w$$' /> <input type='hidden' name='xmIwtLD' value='C*1Xx3JRzqZHerwTNODIW7chDcGQB5gh' /> <input type='hidden' name='actionType' value='Q2FzZXM=' /> <input type='hidden' name='returnURL' value='http://dashboard.quatrodigital.com.br/obrigado' />
+			<table border='0' cellspacing='0' cellpadding='5' class='zsFormClass'>
+				<tr>
+					<td nowrap class='zsFontClass ' width='25%' align='left'>Nome&nbsp;&nbsp;</td>
+					<td align='left' width='75%'><input type='text' maxlength='120' name='First Name' value='' /></td>
+				</tr>
+				<tr>
+					<td nowrap class='zsFontClass ' width='25%' align='left'>Sobrenome<span class='wtcmanfield'>*</span>&nbsp;&nbsp;</td>
+					<td align='left' width='75%'><input type='text' maxlength='120' name='Contact Name' /></td>
+				</tr>
+				<tr>
+					<td nowrap class='zsFontClass ' width='25%' align='left'>E-mail<span class='wtcmanfield'>*</span>&nbsp;&nbsp;</td>
+					<td align='left' width='75%'><input type='text' maxlength='120' name='Email' value='' /></td>
+				</tr>
+				<tr>
+					<td nowrap class='zsFontClass ' width='25%' align='left'>Assunto<span class='wtcmanfield'>*</span>&nbsp;&nbsp;</td>
+					<td align='left' width='75%'><input type='text' maxlength='255' name='Subject' value='' /></td>
+				</tr>
+				<tr>
+					<td nowrap class='zsFontClass ' width='25%' align='left'>Descri&ccedil;&atilde;o &nbsp;&nbsp;</td>
+					<td align='left' width='75%'> <textarea name='Description' maxlength='3000' width='250' height='250'></textarea></td>
+				</tr>
+				<tr style='display:none'>
+					<td nowrap class='zsFontClass ' width='25%' align='left'>Classifica&ccedil;&otilde;es &nbsp;&nbsp;</td>
+					<td align='left' width='75%'><select name='Classification' value='QD&#x20;Dashboard'> <option value='-None-' >-None-</option> <option value='VTEX N1' >VTEX N1</option> <option value='Gestão de Projetos' >Gestão de Projetos</option> <option value='QD Dashboard' selected>QD Dashboard</option> </select></td>
+				</tr>
+				<tr>
+					<td colspan='2' align='center' width='25%'> <input type='submit' id="zsSubmitButton_106622000000124059" class='zsFontClass' value='Enviar'> &nbsp; &nbsp; </td>
+				</tr>
+			</table>
+		</form>
+	</div>
+</body>
+</html>
