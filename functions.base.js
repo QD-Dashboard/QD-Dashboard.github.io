@@ -10,20 +10,9 @@ try {
 		run: function() {},
 		init: function() {
 			Common.ordersChart();
-			Common.vtexIdLogin();
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
-		vtexIdLogin: function() {
-			// https://vtexid.vtex.com.br/api/vtexid/pub/authenticated/user?authToken=
-			// $(document.body).click( function(){
-			// 	vtexid.setScope('');
-			// 	vtexid.start({
-			// 		 returnUrl: window.location.href
-			// 	});
-			// 	return false;
-			// });
-		},
 		ordersChart: function() {
 			$.ajax({
 				// url: "data.php",
