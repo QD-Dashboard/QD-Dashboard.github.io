@@ -9,15 +9,21 @@ try {
 	var Common = {
 		run: function() {},
 		init: function() {
-			Common.ordersChart();
+			if (!Common.logged()) 
+				Common.loginModal();
+			else
+				Common.ordersChart();
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
+		logged:function() {
+			if ($.cookie('qdToken')) 
+				return true;
+			return false;
+		},
 		ordersChart: function() {
 			$.ajax({
-				// url: "data.php",
-				// url: "http://192.168.2.112:8080/dashboard/api/ordersday",
-				url: "http://dashboardapi.quatrodigital.com.br/ordersday",
+				url: "http://dashboardapi.quatrodigital.com.br/orders-day",
 				dataType: "json"
 			}).done(function(data) {
 				var chartData = {
@@ -55,7 +61,161 @@ try {
 
 				$(canvas).addClass("loaded").before('Período: ' + data.startDate + ' até ' + data.endDate + '');
 			});
-		}
+		}, 
+		loginModal: function() {
+			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
+			elemModal.removeClass('modal-qd-v1'); 
+			elemModal.find('.modal-title').text('Informe seu e-mail');
+			elemModal.find('.modal-body').html('<form class="login"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">E-mail:</label> <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value="alex@quatrodigital.com.br"> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">Login</button> </form>');
+			elemModal.modal({backdrop: 'static', keyboard: false });
+			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+
+			elemModal.find('form.login').on('submit', function(e){
+				e.preventDefault();
+
+				$.ajax({
+					type: 'POST',
+					url : 'http://dashboardapi.quatrodigital.com.br/get-token',
+					data: {
+						email:elemModal.find('input#email').val()
+					},
+					beforeSend:function() {
+						elemModal.find('.modal-body form .pull-right').remove();	
+						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+					},
+					success:function(data) {
+						elemModal.find('.modal-body form .pull-right').remove();	
+						if (data.success) {
+							elemModal.modal('hide');
+							Common.checkToken(data.qdToken);
+						} else {
+							elemModal.find('.modal-body form form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel efetuar o login </span> </div>');
+						}
+					},
+					error: function(data){
+						elemModal.find('.modal-body form .pull-right').remove();	
+						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel efetuar o login </span> </div>');
+					}
+				});
+			}); 
+		},
+		checkToken: function(qdToken) { 
+			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
+			elemModal.removeClass('modal-qd-v1');
+			elemModal.find('.modal-title').text('Informe a chave de acesso');
+			elemModal.find('.modal-body').html('<form class="checkToken"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">Chave de acesso com 4 dígitos:</label> <input type="tel" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-validate-token">validar</button> </form>');
+			elemModal.modal({backdrop: 'static', keyboard: false });
+			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+
+			elemModal.find('form.checkToken').on('submit', function(e){
+				e.preventDefault();
+				$.ajax({
+					type: 'GET',
+					url : 'http://dashboardapi.quatrodigital.com.br/token-validate',
+					data: {
+						token: elemModal.find('input#token').val(),
+						qdToken: qdToken
+					},
+					beforeSend:function() {
+						elemModal.find('.modal-body form .pull-right').remove();	
+						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+					},
+					success:function(data) {
+						elemModal.find('.modal-body form .pull-right').remove();	
+						if (data.success) {
+							if (!data.hasStores) {
+								elemModal.modal('hide');
+								Common.messageUserLogged(qdToken);
+							}
+							else 
+								window.location.reload();
+								$.cookie('qdToken', qdToken, { path: "/" });
+								$.ajaxSetup({
+				            		headers: { 'x-qd-token': qdToken },
+				                });
+						} else {
+							$.removeCookie('qdToken');
+							elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
+						}
+					},
+					error: function(data){
+						console.log(data);
+						elemModal.find('.modal-body form .pull-right').remove();	
+						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
+					}
+				});
+			});
+		},
+		messageUserLogged: function(qdToken) { 
+			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
+			elemModal.removeClass('modal-qd-v1');
+			elemModal.find('.modal-title').text('Parabens!');
+			elemModal.find('.modal-body').html('Você está logado, mais ainda não possui um store, cadastre uma agora mesmo. <br /><br /><button type="button" class="btn btn-primary btn-validate-token">cadastrar</button>');
+			elemModal.modal({backdrop: 'static', keyboard: false });
+			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+
+			elemModal.find('.btn-validate-token').on('click', function(){
+				elemModal.modal('hide');
+				Common.setStore(qdToken);
+			}); 
+		},
+		setStore: function(qdToken) {
+			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
+			elemModal.removeClass('modal-qd-v1');
+			elemModal.find('.modal-title').text('Informe os dados da instituição');
+			elemModal.find('.modal-body').html('<form class="cadastro"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="account">Account</label> <input type="text" class="form-control" id="account" name="account" placeholder="Account" value="QD"> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="key">Key</label> <input type="text" class="form-control" id="key" name="key" placeholder="Key" value="QD123"> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="token">Token</label> <input type="text" class="form-control" id="token" name="token" placeholder="Token" value="QD789"> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">cadastrar</button> </form>'); 
+			elemModal.modal({backdrop: 'static', keyboard: false });
+			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+
+			elemModal.find('form.cadastro').on('submit', function(e){
+				e.preventDefault();
+
+				$.ajax({ 
+					type: 'POST',
+					url : 'http://dashboardapi.quatrodigital.com.br/set-store',
+					data: {
+						qdToken:qdToken,
+						account:elemModal.find('input#account').val(),
+						key:elemModal.find('input#key').val(),
+						token:elemModal.find('input#token').val()
+					},
+					beforeSend:function() {
+						elemModal.find('.modal-body form .pull-right').remove();	
+						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+					},
+					success:function(data) {
+						console.log(data);
+						elemModal.find('.modal-body form .pull-right').remove();	
+						if (data.success) {
+							elemModal.modal('hide');
+							Common.messageSetStoreSaved(qdToken);
+						} else {
+							elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
+						}
+					},
+					error: function(data){
+						console.log( data );
+						elemModal.find('.modal-body form .pull-right').remove();	
+						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
+					}
+				});
+			});
+		},
+		messageSetStoreSaved: function(qdToken) { 
+			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
+			elemModal.removeClass('modal-qd-v1');
+			elemModal.find('.modal-title').text('Parabens!');
+			elemModal.find('.modal-body').html('Você completou a faze de login e cadastro de stores , ver relatório . <br /><br /><button type="button" class="btn btn-primary btn-fim">fim</button>');
+			elemModal.modal({backdrop: 'static', keyboard: false });
+			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+			$.cookie('qdToken', token, { path: "/" });
+			$.ajaxSetup({
+				headers: { 'x-qd-token': qdToken },
+			});
+			elemModal.find('.btn-fim').on('click', function(){
+				window.location.reload();
+			}); 
+		},
 	}
 }
 catch (e) {(typeof console !== "undefined" && typeof console.error === "function" && console.error("Houve um erro nos objetos. Detalhes: " + e.message)); }
