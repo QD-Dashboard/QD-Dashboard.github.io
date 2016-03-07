@@ -66,7 +66,7 @@ try {
 			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
 			elemModal.removeClass('modal-qd-v1'); 
 			elemModal.find('.modal-title').text('Informe seu e-mail');
-			elemModal.find('.modal-body').html('<form class="login"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">E-mail:</label> <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value="alex@quatrodigital.com.br"> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">Login</button> </form>');
+			elemModal.find('.modal-body').html('<form class="login"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">E-mail:</label> <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">Login</button> </form>');
 			elemModal.modal({backdrop: 'static', keyboard: false });
 			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
 
@@ -163,7 +163,7 @@ try {
 			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
 			elemModal.removeClass('modal-qd-v1');
 			elemModal.find('.modal-title').text('Informe os dados da instituição');
-			elemModal.find('.modal-body').html('<form class="cadastro"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="account">Account</label> <input type="text" class="form-control" id="account" name="account" placeholder="Account" value="QD"> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="key">Key</label> <input type="text" class="form-control" id="key" name="key" placeholder="Key" value="QD123"> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="token">Token</label> <input type="text" class="form-control" id="token" name="token" placeholder="Token" value="QD789"> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">cadastrar</button> </form>'); 
+			elemModal.find('.modal-body').html('<form class="cadastro"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="account">Account</label> <input type="text" class="form-control" id="account" name="account" placeholder="Account" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="key">Key</label> <input type="text" class="form-control" id="key" name="key" placeholder="Key" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="token">Token</label> <input type="text" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">cadastrar</button> </form>'); 
 			elemModal.modal({backdrop: 'static', keyboard: false });
 			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
 
