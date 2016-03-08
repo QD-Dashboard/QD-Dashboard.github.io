@@ -9,6 +9,8 @@ try {
 	var Common = {
 		run: function() {},
 		init: function() {
+			
+
 			if (!Common.logged()) 
 				Common.loginModal();
 			else
@@ -17,7 +19,7 @@ try {
 		ajaxStop: function() {},
 		windowOnload: function() {},
 		logged:function() {
-			if ($.cookie('qdToken')) 
+			if ($.cookie('x-qd-auth')) 
 				return true;
 			return false;
 		},
@@ -84,10 +86,16 @@ try {
 						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
 					},
 					success:function(data) {
+						$.ajaxSetup({
+							headers: { 'x-qd-auth': data.xQdAuth }
+						});
+
+						$.cookie('tmp_qd', data.xQdAuth, { expires: 7 });
+
 						elemModal.find('.modal-body form .pull-right').remove();	
 						if (data.success) {
 							elemModal.modal('hide');
-							Common.checkToken(data.qdToken);
+							Common.checkToken();
 						} else {
 							elemModal.find('.modal-body form form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel efetuar o login </span> </div>');
 						}
@@ -113,8 +121,7 @@ try {
 					type: 'GET',
 					url : 'http://dashboardapi.quatrodigital.com.br/token-validate',
 					data: {
-						token: elemModal.find('input#token').val(),
-						qdToken: qdToken
+						token: elemModal.find('input#token').val()
 					},
 					beforeSend:function() {
 						elemModal.find('.modal-body form .pull-right').remove();	
@@ -122,17 +129,16 @@ try {
 					},
 					success:function(data) {
 						elemModal.find('.modal-body form .pull-right').remove();	
-						if (data.success) {
+						if (data.success) {						
 							if (!data.hasStores) {
 								elemModal.modal('hide');
 								Common.messageUserLogged(qdToken);
 							}
-							else 
+							else {
 								window.location.reload();
-								$.cookie('qdToken', qdToken, { path: "/" });
-								$.ajaxSetup({
-				            		headers: { 'x-qd-token': qdToken },
-				                });
+								$.cookie('x-qd-auth', $.cookie('tmp_qd'));
+								$.removeCookie('tmp_qd');
+							}
 						} else {
 							$.removeCookie('qdToken');
 							elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
@@ -160,6 +166,7 @@ try {
 			}); 
 		},
 		setStore: function(qdToken) {
+			console.log(qdToken);
 			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
 			elemModal.removeClass('modal-qd-v1');
 			elemModal.find('.modal-title').text('Informe os dados da instituição');
@@ -174,21 +181,21 @@ try {
 					type: 'POST',
 					url : 'http://dashboardapi.quatrodigital.com.br/set-store',
 					data: {
-						qdToken:qdToken,
 						account:elemModal.find('input#account').val(),
 						key:elemModal.find('input#key').val(),
 						token:elemModal.find('input#token').val()
 					},
-					beforeSend:function() {
+					beforeSend:function(xhr) {
 						elemModal.find('.modal-body form .pull-right').remove();	
 						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
 					},
 					success:function(data) {
-						console.log(data);
 						elemModal.find('.modal-body form .pull-right').remove();	
 						if (data.success) {
 							elemModal.modal('hide');
 							Common.messageSetStoreSaved(qdToken);
+							$.cookie('x-qd-auth', $.cookie('tmp_qd'));
+							$.removeCookie('tmp_qd');
 						} else {
 							elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
 						}
