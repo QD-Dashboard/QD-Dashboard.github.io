@@ -9,17 +9,26 @@ try {
 	var Common = {
 		run: function() {},
 		init: function() {
-			
+			Common.start();
 
-			if (!Common.logged()) 
-				Common.loginModal();
-			else
-				Common.ordersChart();
+			// if (!Common.logged()) 
+			// 	Common.loginModal();
+			// else
+			// 	Common.ordersChart();
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
+		start:function() {
+			$.ajax({
+				url: "http://dashboardapi.quatrodigital.com.br/start",
+				dataType: "json",
+				success:function(data) {
+					$.cookie('PHPSESSID' , data.PHPSESSID , { path: '/' });
+				}
+			})
+		},
 		logged:function() {
-			if ($.cookie('x-qd-auth')) 
+			if ($.cookie('PHPSESSID')) 
 				return true;
 			return false;
 		},
