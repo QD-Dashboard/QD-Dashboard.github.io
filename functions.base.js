@@ -11,12 +11,13 @@ try {
 			Common.queryString();
 		},
 		init: function() {
+			window._QD_restful_url = "http://dashboardapi.quatrodigital.com.br";
+
 			if (!Common.logged())
 				Common.loginModal();
 			else {
 				Common.selectStore();
 				Common.qdLinkAddLoja();
-				Common.ordersChart();
 			}
 		},
 		ajaxStop: function() {},
@@ -44,48 +45,52 @@ try {
 			return true;
 		},
 		ordersChart: function() {
+			var dataStore = "";
 			$.ajax({
 				headers:window._QD_ajax_headers,
-				url: "http://dashboardapi.quatrodigital.com.br/orders-day",
+				url: _QD_restful_url+"/orders-day",
 				dataType: "json",
+				async:false,
 				data: {
 					store: window._QD_query_string.store
 				}
 			}).done(function(data) {
+				dataStore = data.store;
 				var chartData = {
 					labels: data.chartOrdersLabel,
 					datasets: [
-					{
-						label: "Pedidos",
-						fillColor: "rgba(1, 112, 0, 0.2)",
-						strokeColor: "rgba(220,220,220,1)",
-						pointColor: "#014200",
-						pointStrokeColor: "#fff",
-						pointHighlightFill: "#fff",
-						pointHighlightStroke: "rgba(220,220,220,1)",
-						data: data.chartOrdersValue
-					},
-					{
-						label: "Rank",
-						fillColor: "rgba(151,187,205,0.2)",
-						strokeColor: "rgba(151,187,205,1)",
-						pointColor: "rgba(151,187,205,1)",
-						pointStrokeColor: "#fff",
-						pointHighlightFill: "#fff",
-						pointHighlightStroke: "rgba(151,187,205,1)",
-						data: data.chartOrdersPosition
-					}
+						{
+							label: "Pedidos",
+							fillColor: "rgba(1, 112, 0, 0.2)",
+							strokeColor: "rgba(220,220,220,1)",
+							pointColor: "#014200",
+							pointStrokeColor: "#fff",
+							pointHighlightFill: "#fff",
+							pointHighlightStroke: "rgba(220,220,220,1)",
+							data: data.chartOrdersValue
+						},
+						{
+							label: "Rank",
+							fillColor: "rgba(151,187,205,0.2)",
+							strokeColor: "rgba(151,187,205,1)",
+							pointColor: "rgba(151,187,205,1)",
+							pointStrokeColor: "#fff",
+							pointHighlightFill: "#fff",
+							pointHighlightStroke: "rgba(151,187,205,1)",
+							data: data.chartOrdersPosition
+						}
 					]
 				};
 
 				var canvas = document.getElementById("orders-chart");
 				var myNewChart = new Chart(canvas.getContext("2d")).Line(chartData, {
 					tooltipTemplate: "<%if (label){%><%=label%>: s<%}%>b<%= value %>s",
+					// multiTooltipTemplate: "<%= datasetLabel %> - <%= value %>",
 					legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color: <%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>",
 					responsive: true
 				});
-
-				$(canvas).addClass("loaded").before('Período: ' + data.startDate + ' até ' + data.endDate + '');
+				
+				$(canvas).addClass("loaded").before('<b>Loja:</b> ' +dataStore+'<Br /><b>Período:</b> ' + data.startDate + ' até ' + data.endDate + '');
 			});
 		},
 		loginModal: function() {
@@ -104,7 +109,7 @@ try {
 
 				$.ajax({
 					type: 'POST',
-					url : '//dashboardapi.quatrodigital.com.br/get-token',
+					url : window._QD_restful_url+'/get-token',
 					data: {email: elemModal.find('input#email').val() },
 					success: function(data) {
 						window._QD_ajax_headers = {
@@ -139,7 +144,7 @@ try {
 				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
 				$.ajax({
 					headers:window._QD_ajax_headers,
-					url : 'http://dashboardapi.quatrodigital.com.br/token-validate',
+					url : window._QD_restful_url+'/token-validate',
 					data: {token: form.find('input#token').val()},
 					success: function(data) {
 						if (data.success) {
@@ -170,14 +175,16 @@ try {
 
 			elemModal.find('.btn-validate-token').on('click', function(){
 				elemModal.modal('hide');
-				Common.setStore();
+				Common.setStore(false);
 			});
 		},
-		setStore: function() {
+		setStore: function(withClose) {
 			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
 			var form  = $('<form class="cadastro"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="account">Account</label> <input type="text" class="form-control" id="account" name="account" placeholder="Account" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="key">Key</label> <input type="text" class="form-control" id="key" name="key" placeholder="Key" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="token">Token</label> <input type="text" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">cadastrar</button> </form>').appendTo(elemModal.find('.modal-body').empty());
 			elemModal.removeClass('modal-qd-v1');
 			elemModal.find('.modal-title').text('Informe os dados da instituição');
+			if (withClose) 
+				elemModal.find('.modal-title').append('<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
 			elemModal.modal({backdrop: 'static', keyboard: false });
 			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
 
@@ -190,7 +197,7 @@ try {
 				$.ajax({
 					headers:window._QD_ajax_headers,
 					type: 'POST',
-					url : 'http://dashboardapi.quatrodigital.com.br/set-store',
+					url : window._QD_restful_url+'/set-store',
 					data: {
 						account: elemModal.find('input#account').val(),
 						key: elemModal.find('input#key').val(),
@@ -228,23 +235,27 @@ try {
 		}, 
 		qdLinkAddLoja: function() {
 			$('.qd-link-add-loja').on('click', function(){
-				Common.setStore();	
+				Common.setStore(true);	
 				return false;
 			});
 		},
 		selectStore: function() {
-			var ulLojas = $('ul.dropdown-menu.lojas');
+			var ulLojas = $('ul.dropdown-menu.store');
 			$.ajax({
 				headers:window._QD_ajax_headers,
 				type: 'GET',
-				url : 'http://dashboardapi.quatrodigital.com.br/get-stores',
+				url : window._QD_restful_url+'/get-stores',
 				success: function(data) {
 					for (var i in data.stores) {
 						ulLojas.append('<li><a href="?store='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
 					}
 					
 					if(!window._QD_query_string.store)
-						window.location.search = 'store=' + data.stores[i].account;
+						window.location.search = 'store=' + data.stores[0].account;
+
+					$('.btn-default.dropdown-toggle.store').html(window._QD_query_string.store + ' <span class="caret"></span>');
+					Common.ordersChart();
+					
 				},
 				error: function(data){
 					
