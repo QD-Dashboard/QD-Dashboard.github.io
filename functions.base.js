@@ -7,7 +7,9 @@ Array.prototype.indexOf||(Array.prototype.indexOf=function(d,e){var a;if(null==t
 
 try {
 	var Common = {
-		run: function() {},
+		run: function() {
+			Common.queryString();
+		},
 		init: function() {
 			if (!Common.logged())
 				Common.loginModal();
@@ -17,20 +19,19 @@ try {
 				Common.ordersChart();
 			}
 		},
-		qs: function() {
-			return document.location.search ? document.location.search.substr(1).split('&').map(
-		      function(v){
-		        return v.split('=');
-		      }
-		    ).reduce(
-		      function(prev, curr) {
-		        prev[curr[0]] = curr[1];
-		        return prev;
-		      },
-		      {}) : undefined;
-		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
+		queryString: function() {
+			var items = (document.location.search || "").replace("?", "").split("&");
+			var query = {};
+			var item;
+			for(var i in items){
+				item = items[i].split("=");
+				query[item[0]] = item[1] || "";
+			}
+
+			window._QD_query_string = query;
+		},
 		logged: function() {
 			var token = $.cookie('qdToken');
 			if (!token)
@@ -43,13 +44,12 @@ try {
 			return true;
 		},
 		ordersChart: function() {
-			qs = Common.qs();
 			$.ajax({
 				headers:window._QD_ajax_headers,
 				url: "http://dashboardapi.quatrodigital.com.br/orders-day",
 				dataType: "json",
 				data: {
-					store_account:qs.loja
+					store: window._QD_query_string.store
 				}
 			}).done(function(data) {
 				var chartData = {
@@ -143,7 +143,7 @@ try {
 					data: {token: form.find('input#token').val()},
 					success: function(data) {
 						if (data.success) {
-							$.cookie('qdToken', window._QD_qd_auth, { path: "/" });
+							$.cookie('qdToken', window._QD_qd_auth, { expires: 60 * 60 * 23  ,  path: "/" });
 							if (!data.hasStores) {
 								elemModal.modal('hide');
 								Common.messageUserLogged();
@@ -240,8 +240,11 @@ try {
 				url : 'http://dashboardapi.quatrodigital.com.br/get-stores',
 				success: function(data) {
 					for (var i in data.stores) {
-						ulLojas.append('<li><a href="?loja='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
+						ulLojas.append('<li><a href="?store='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
 					}
+					
+					if(!window._QD_query_string.store)
+						window.location.search = 'store=' + data.stores[i].account;
 				},
 				error: function(data){
 					
