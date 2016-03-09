@@ -11,8 +11,23 @@ try {
 		init: function() {
 			if (!Common.logged())
 				Common.loginModal();
-			else
+			else {
+				Common.selectStore();
+				Common.qdLinkAddLoja();
 				Common.ordersChart();
+			}
+		},
+		qs: function() {
+			return document.location.search ? document.location.search.substr(1).split('&').map(
+		      function(v){
+		        return v.split('=');
+		      }
+		    ).reduce(
+		      function(prev, curr) {
+		        prev[curr[0]] = curr[1];
+		        return prev;
+		      },
+		      {}) : undefined;
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
@@ -21,14 +36,21 @@ try {
 			if (!token)
 				return false;
 
-			$.ajaxSetup({headers: { 'x-qd-auth': token } });
 			window._QD_qd_auth = token;
-			return false;
+			window._QD_ajax_headers = {
+				'x-qd-auth': token
+			};
+			return true;
 		},
 		ordersChart: function() {
+			qs = Common.qs();
 			$.ajax({
+				headers:window._QD_ajax_headers,
 				url: "http://dashboardapi.quatrodigital.com.br/orders-day",
-				dataType: "json"
+				dataType: "json",
+				data: {
+					store_account:qs.loja
+				}
 			}).done(function(data) {
 				var chartData = {
 					labels: data.chartOrdersLabel,
@@ -79,29 +101,30 @@ try {
 
 				form.find(".request-message").remove();
 				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+
 				$.ajax({
 					type: 'POST',
 					url : '//dashboardapi.quatrodigital.com.br/get-token',
 					data: {email: elemModal.find('input#email').val() },
 					success: function(data) {
-						$.ajaxSetup({headers: { 'x-qd-auth': data.xQdAuth } });
+						window._QD_ajax_headers = {
+							'x-qd-auth': data.xQdAuth
+						};
 						window._QD_qd_auth = data.xQdAuth;
 
-						elemModal.find('.modal-body form .pull-right').remove();
 						if (data.success) {
 							elemModal.modal('hide');
 							Common.checkToken();
 						} else
-							elemModal.find('.modal-body form form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel efetuar o login </span> </div>');
+							form.find(".request-message").text('Não foi possivel efetuar o login');
 					},
 					error: function(data){
-						form.find(".request-message").remove();
-						form.append('<div class="pull-right"> <span class="label label-danger">Não foi possivel efetuar o login </span> </div>');
+						form.find(".request-message").text('Não foi possivel efetuar o login ');
 					}
 				});
 			});
 		},
-		checkToken: function(qdToken) {
+		checkToken: function() {
 			var elemModal = $('.qd-modal-base').clone().removeClass("qd-modal-base").appendTo(document.body);
 			elemModal.find('.modal-title').text('Informe a chave de acesso');
 			var form  = $('<form class="checkToken"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">Chave de acesso com 4 dígitos: </label> <input type="tel" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-validate-token">validar</button> </form>').appendTo(elemModal.find('.modal-body').empty());
@@ -115,54 +138,57 @@ try {
 				form.find(".request-message").remove();
 				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
 				$.ajax({
+					headers:window._QD_ajax_headers,
 					url : 'http://dashboardapi.quatrodigital.com.br/token-validate',
 					data: {token: form.find('input#token').val()},
 					success: function(data) {
-						elemModal.find('.modal-body form .pull-right').remove();
 						if (data.success) {
+							$.cookie('qdToken', window._QD_qd_auth, { path: "/" });
 							if (!data.hasStores) {
 								elemModal.modal('hide');
-								Common.messageUserLogged(qdToken);
+								Common.messageUserLogged();
 							}
 							else
 								window.location.reload();
-							$.cookie('qdToken', window._QD_qd_auth, { path: "/" });
 						}
 						else
-							elemModal.find('.modal-body form').append('<div class="pull-right request-message"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
+							form.find(".request-message").text('Não foi possivel validar o token');
 					},
 					error: function(data){
-						form.find(".request-message").remove();
-						form.append('<div class="pull-right request-message"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
+						form.find(".request-message").text('Não foi possivel validar o token');
 					}
 				});
 			});
 		},
-		messageUserLogged: function(qdToken) {
+		messageUserLogged: function() {
 			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
 			elemModal.removeClass('modal-qd-v1');
 			elemModal.find('.modal-title').text('Parabens!');
-			elemModal.find('.modal-body').html('Você está logado, mais ainda não possui um store, cadastre uma agora mesmo. <br /><br /><button type="button" class="btn btn-primary btn-validate-token">cadastrar</button>');
+			elemModal.find('.modal-body').html('Você está logado, mais ainda não possui uma loja, cadastre uma agora mesmo. <br /><br /><button type="button" class="btn btn-primary btn-validate-token">cadastrar</button>');
 			elemModal.modal({backdrop: 'static', keyboard: false });
 			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
 
 			elemModal.find('.btn-validate-token').on('click', function(){
 				elemModal.modal('hide');
-				Common.setStore(qdToken);
+				Common.setStore();
 			});
 		},
-		setStore: function(qdToken) {
+		setStore: function() {
 			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
+			var form  = $('<form class="cadastro"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="account">Account</label> <input type="text" class="form-control" id="account" name="account" placeholder="Account" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="key">Key</label> <input type="text" class="form-control" id="key" name="key" placeholder="Key" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="token">Token</label> <input type="text" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">cadastrar</button> </form>').appendTo(elemModal.find('.modal-body').empty());
 			elemModal.removeClass('modal-qd-v1');
 			elemModal.find('.modal-title').text('Informe os dados da instituição');
-			elemModal.find('.modal-body').html('<form class="cadastro"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="account">Account</label> <input type="text" class="form-control" id="account" name="account" placeholder="Account" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="key">Key</label> <input type="text" class="form-control" id="key" name="key" placeholder="Key" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="token">Token</label> <input type="text" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">cadastrar</button> </form>');
 			elemModal.modal({backdrop: 'static', keyboard: false });
 			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
 
-			elemModal.find('form.cadastro').on('submit', function(e){
+			form.on('submit', function(e){
 				e.preventDefault();
 
+				form.find(".request-message").remove();
+				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+
 				$.ajax({
+					headers:window._QD_ajax_headers,
 					type: 'POST',
 					url : 'http://dashboardapi.quatrodigital.com.br/set-store',
 					data: {
@@ -178,28 +204,48 @@ try {
 						elemModal.find('.modal-body form .pull-right').remove();
 						if (data.success) {
 							elemModal.modal('hide');
-							Common.messageSetStoreSaved(qdToken);
-							$.removeCookie('tmp_qd');
+							Common.messageSetStoreSaved();
 						}
 						else
-							elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
+							form.find(".request-message").text('Não foi possivel cadastrar store');
 					},
 					error: function(data){
-						elemModal.find('.modal-body form .pull-right').remove();
-						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-danger">Não foi possivel validar o token </span> </div>');
+						form.find(".request-message").text('Não foi possivel cadastrar store');
 					}
 				});
 			});
 		},
-		messageSetStoreSaved: function(qdToken) {
+		messageSetStoreSaved: function() {
 			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
 			elemModal.removeClass('modal-qd-v1');
 			elemModal.find('.modal-title').text('Parabens!');
-			elemModal.find('.modal-body').html('Você completou a faze de login e cadastro de stores , ver relatório . <br /><br /><button type="button" class="btn btn-primary btn-fim">fim</button>');
+			elemModal.find('.modal-body').html('Loja cadastrada com sucesso. <br /><br /><button type="button" class="btn btn-primary btn-fim">fim</button>');
 			elemModal.modal({backdrop: 'static', keyboard: false });
 			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
 			elemModal.find('.btn-fim').on('click', function(){
 				window.location.reload();
+			});
+		}, 
+		qdLinkAddLoja: function() {
+			$('.qd-link-add-loja').on('click', function(){
+				Common.setStore();	
+				return false;
+			});
+		},
+		selectStore: function() {
+			var ulLojas = $('ul.dropdown-menu.lojas');
+			$.ajax({
+				headers:window._QD_ajax_headers,
+				type: 'GET',
+				url : 'http://dashboardapi.quatrodigital.com.br/get-stores',
+				success: function(data) {
+					for (var i in data.stores) {
+						ulLojas.append('<li><a href="?loja='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
+					}
+				},
+				error: function(data){
+					
+				}
 			});
 		},
 	}
