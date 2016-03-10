@@ -55,6 +55,7 @@ try {
 					store: window._QD_query_string.store
 				}
 			}).done(function(data) {
+				var randomScalingFactor = function(){ return Math.round(Math.random()*1000000)};
 				dataStore = data.store;
 				var chartData = {
 					labels: data.chartOrdersLabel,
@@ -84,8 +85,7 @@ try {
 
 				var canvas = document.getElementById("orders-chart");
 				var myNewChart = new Chart(canvas.getContext("2d")).Line(chartData, {
-					tooltipTemplate: "<%if (label){%><%=label%>: s<%}%>b<%= value %>s",
-					// multiTooltipTemplate: "<%= datasetLabel %> - <%= value %>",
+					multiTooltipTemplate: "<%= datasetLabel %> - <%= value %>",
 					legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color: <%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>",
 					responsive: true
 				});
@@ -254,8 +254,7 @@ try {
 						window.location.search = 'store=' + data.stores[0].account;
 
 					$('.btn-default.dropdown-toggle.store').html(window._QD_query_string.store + ' <span class="caret"></span>');
-					Common.ordersChart();
-					
+					Common.ordersChart();					
 				},
 				error: function(data){
 					
