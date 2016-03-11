@@ -8,20 +8,24 @@ Array.prototype.indexOf||(Array.prototype.indexOf=function(d,e){var a;if(null==t
 try {
 	var Common = {
 		run: function() {
+			window._QD_restful_url = "http://dashboardapi.quatrodigital.com.br";
 			Common.queryString();
+			Common.checkAuthentication();
 		},
 		init: function() {
-			window._QD_restful_url = "http://dashboardapi.quatrodigital.com.br";
-
 			if (!Common.logged())
 				Common.loginModal();
 			else {
 				Common.selectStore();
 				Common.qdLinkAddLoja();
+
+				if(window._QD_query_string.store)
+					Common.ordersChart();
 			}
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
+		checkAuthentication: function() {},
 		queryString: function() {
 			var items = (document.location.search || "").replace("?", "").split("&");
 			var query = {};
@@ -48,7 +52,7 @@ try {
 			var dataStore = "";
 			$.ajax({
 				headers:window._QD_ajax_headers,
-				url: _QD_restful_url+"/orders-day",
+				url: _QD_restful_url + "/pvt/orders-day",
 				dataType: "json",
 				async:false,
 				data: {
@@ -109,7 +113,7 @@ try {
 
 				$.ajax({
 					type: 'POST',
-					url : window._QD_restful_url+'/get-token',
+					url : window._QD_restful_url + '/get-token',
 					data: {email: elemModal.find('input#email').val() },
 					success: function(data) {
 						window._QD_ajax_headers = {
@@ -144,7 +148,7 @@ try {
 				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
 				$.ajax({
 					headers:window._QD_ajax_headers,
-					url : window._QD_restful_url+'/token-validate',
+					url : window._QD_restful_url + '/pvt/token-validate',
 					data: {token: form.find('input#token').val()},
 					success: function(data) {
 						if (data.success) {
@@ -197,7 +201,7 @@ try {
 				$.ajax({
 					headers:window._QD_ajax_headers,
 					type: 'POST',
-					url : window._QD_restful_url+'/set-store',
+					url : window._QD_restful_url + '/pvt/set-store',
 					data: {
 						account: elemModal.find('input#account').val(),
 						key: elemModal.find('input#key').val(),
@@ -244,7 +248,7 @@ try {
 			$.ajax({
 				headers:window._QD_ajax_headers,
 				type: 'GET',
-				url : window._QD_restful_url+'/get-stores',
+				url : window._QD_restful_url + '/pvt/get-stores',
 				success: function(data) {
 					for (var i in data.stores) {
 						ulLojas.append('<li><a href="?store='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
@@ -253,8 +257,7 @@ try {
 					if(!window._QD_query_string.store)
 						window.location.search = 'store=' + data.stores[0].account;
 
-					$('.btn-default.dropdown-toggle.store').html(window._QD_query_string.store + ' <span class="caret"></span>');
-					Common.ordersChart();					
+					$('.btn-default.dropdown-toggle.store').html(window._QD_query_string.store + ' <span class="caret"></span>');					
 				},
 				error: function(data){
 					
