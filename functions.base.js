@@ -13,6 +13,7 @@ try {
 
 			Common.queryString();
 			Common.checkAuthentication();
+			// Common.analyticsQ();
 		},
 		init: function() {
 			if (!Common.logged())
@@ -27,6 +28,19 @@ try {
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
+		analyticsQ: function() {
+			console.log("qui");	
+			$.ajax({
+				type: 'GET',
+				url : Common._QD_restful_url + '/analytics-q', 
+				success: function(data) {
+					console.log(data);
+				},
+				error: function(data){
+					
+				}
+			});
+		},
 		checkAuthentication: function() {
 			$(document).ajaxComplete(function(event, XMLHttpRequest, ajaxOptions) {
 				if(XMLHttpRequest.status != 401)
@@ -132,7 +146,7 @@ try {
 			});
 		},
 		checkToken: function() {
-			var form  = $('<form class="checkToken"> <div class="row"> <div class="col-xs-12"> <p>Nós te mandamos uma chave de 6 dígitos no seu e-mail, é ela que você deve informar agora!</p><div class="form-group"> <label for="email">Chave de acesso com 4 dígitos: </label> <input type="tel" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-validate-token">Validar</button> </form>');
+			var form  = $('<form class="checkToken"> <div class="row"> <div class="col-xs-12"> <p>Nós te mandamos uma chave de 6 dígitos no seu e-mail, é ela que você deve informar agora!</p><div class="form-group"> <label for="email">Chave de acesso com 6 dígitos: </label> <input type="tel" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-validate-token">Validar</button> </form>');
 			var modal = Common.preparingModal({
 				doNotClose: true,
 				title: 'Informe a chave de acesso',
