@@ -8,7 +8,9 @@ Array.prototype.indexOf||(Array.prototype.indexOf=function(d,e){var a;if(null==t
 try {
 	var Common = {
 		run: function() {
-			window._QD_restful_url = "http://dashboardapi.quatrodigital.com.br";
+			Common._QD_restful_url = "http://dashboardapi.quatrodigital.com.br";
+			Common._QD_restful_report_url = "http://dashboardapi.quatrodigital.com.br";
+
 			Common.queryString();
 			Common.checkAuthentication();
 		},
@@ -19,13 +21,19 @@ try {
 				Common.selectStore();
 				Common.qdLinkAddLoja();
 
-				if(window._QD_query_string.store)
+				if(Common._QD_query_string.store)
 					Common.ordersChart();
 			}
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
-		checkAuthentication: function() {},
+		checkAuthentication: function() {
+			$(document).ajaxComplete(function(event, XMLHttpRequest, ajaxOptions) {
+				if(XMLHttpRequest.status != 401)
+					return;
+				Common.sessionExpirated();
+			});
+		},
 		queryString: function() {
 			var items = (document.location.search || "").replace("?", "").split("&");
 			var query = {};
@@ -35,32 +43,24 @@ try {
 				query[item[0]] = item[1] || "";
 			}
 
-			window._QD_query_string = query;
+			Common._QD_query_string = query;
 		},
 		logged: function() {
 			var token = $.cookie('qdToken');
 			if (!token)
 				return false;
 
-			window._QD_qd_auth = token;
-			window._QD_ajax_headers = {
-				'x-qd-auth': token
-			};
+			Common._QD_qd_auth = token;
+			Common._QD_ajax_headers = {'x-qd-auth': token };
 			return true;
 		},
 		ordersChart: function() {
-			var dataStore = "";
 			$.ajax({
-				headers:window._QD_ajax_headers,
-				url: _QD_restful_url + "/pvt/orders-day",
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_report_url + "/pvt/report/orders-day",
 				dataType: "json",
-				async:false,
-				data: {
-					store: window._QD_query_string.store
-				}
+				data: {store: Common._QD_query_string.store}
 			}).done(function(data) {
-				var randomScalingFactor = function(){ return Math.round(Math.random()*1000000)};
-				dataStore = data.store;
 				var chartData = {
 					labels: data.chartOrdersLabel,
 					datasets: [
@@ -90,180 +90,200 @@ try {
 				var canvas = document.getElementById("orders-chart");
 				var myNewChart = new Chart(canvas.getContext("2d")).Line(chartData, {
 					multiTooltipTemplate: "<%= datasetLabel %> - <%= value %>",
-					legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color: <%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>",
+					legendTemplate: '<ul class="<%=name.toLowerCase()%>-legend"><% for (var i=0; i<segments.length; i++){%><li><span style="background-color: <%=segments[i].fillColor%>"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>',
 					responsive: true
 				});
-				
-				$(canvas).addClass("loaded").before('<b>Loja:</b> ' +dataStore+'<Br /><b>Período:</b> ' + data.startDate + ' até ' + data.endDate + '');
+
+				$(canvas).addClass("loaded").before('<b>Loja:</b> ' + data.store + '<Br /><b>Período:</b> ' + data.startDate + ' até ' + data.endDate);
 			});
 		},
 		loginModal: function() {
-			var elemModal = $('.qd-modal-base').clone().removeClass("qd-modal-base").appendTo(document.body);
-			elemModal.find('.modal-title').text('Informe seu e-mail');
-			var form = $('<form class="login"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">E-mail: </label> <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">Login</button> </form>').appendTo(elemModal.find('.modal-body').empty());
-
-			elemModal.modal({backdrop: 'static', keyboard: false });
-			elemModal.on('hidden.bs.modal', function() { elemModal.remove(); });
+			var form = $('<form class="login"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">E-mail: </label> <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">Login</button> </form>');
+			var modal = Common.preparingModal({
+				doNotClose: true,
+				title: 'Informe seu e-mail',
+				body: form
+			});
 
 			form.on('submit', function(e){
 				e.preventDefault();
 
 				form.find(".request-message").remove();
-				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados ...</span> </div>');
 
 				$.ajax({
 					type: 'POST',
-					url : window._QD_restful_url + '/get-token',
-					data: {email: elemModal.find('input#email').val() },
+					url : Common._QD_restful_url + '/get-token',
+					data: {email: form.find('input#email').val() },
 					success: function(data) {
-						window._QD_ajax_headers = {
-							'x-qd-auth': data.xQdAuth
-						};
-						window._QD_qd_auth = data.xQdAuth;
+						Common._QD_ajax_headers = {'x-qd-auth': data.xQdAuth };
+						Common._QD_qd_auth = data.xQdAuth;
 
 						if (data.success) {
-							elemModal.modal('hide');
+							modal.modal('hide');
 							Common.checkToken();
 						} else
-							form.find(".request-message").text('Não foi possivel efetuar o login');
+							form.find(".request-message").html('<span class="label label-danger">Não foi possivel efetuar o login</span>');
 					},
 					error: function(data){
-						form.find(".request-message").text('Não foi possivel efetuar o login ');
+						form.find(".request-message").html('<span class="label label-danger">Não foi possivel efetuar o login </span>');
 					}
 				});
 			});
 		},
 		checkToken: function() {
-			var elemModal = $('.qd-modal-base').clone().removeClass("qd-modal-base").appendTo(document.body);
-			elemModal.find('.modal-title').text('Informe a chave de acesso');
-			var form  = $('<form class="checkToken"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">Chave de acesso com 4 dígitos: </label> <input type="tel" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-validate-token">validar</button> </form>').appendTo(elemModal.find('.modal-body').empty());
-
-			elemModal.modal({backdrop: 'static', keyboard: false });
-			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+			var form  = $('<form class="checkToken"> <div class="row"> <div class="col-xs-12"> <p>Nós te mandamos uma chave de 6 dígitos no seu e-mail, é ela que você deve informar agora!</p><div class="form-group"> <label for="email">Chave de acesso com 4 dígitos: </label> <input type="tel" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-validate-token">Validar</button> </form>');
+			var modal = Common.preparingModal({
+				doNotClose: true,
+				title: 'Informe a chave de acesso',
+				body: form
+			});
 
 			form.on('submit', function(e){
 				e.preventDefault();
 
 				form.find(".request-message").remove();
-				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados ...</span> </div>');
 				$.ajax({
-					headers:window._QD_ajax_headers,
-					url : window._QD_restful_url + '/pvt/token-validate',
+					headers: Common._QD_ajax_headers,
+					url: Common._QD_restful_url + '/pvt/token-validate',
 					data: {token: form.find('input#token').val()},
 					success: function(data) {
 						if (data.success) {
-							$.cookie('qdToken', window._QD_qd_auth, { expires: 60 * 60 * 23  ,  path: "/" });
+							$.cookie('qdToken', Common._QD_qd_auth, { expires: 60 * 60 * 23,  path: "/" });
+
 							if (!data.hasStores) {
-								elemModal.modal('hide');
+								modal.modal('hide');
 								Common.messageUserLogged();
 							}
 							else
 								window.location.reload();
 						}
 						else
-							form.find(".request-message").text('Não foi possivel validar o token');
+							form.find(".request-message").html('<span class="label label-danger">Não foi possivel validar o token</span>');
 					},
 					error: function(data){
-						form.find(".request-message").text('Não foi possivel validar o token');
+						form.find(".request-message").html('<span class="label label-danger">Não foi possivel validar o token</span>');
 					}
 				});
 			});
 		},
-		messageUserLogged: function() {
-			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
-			elemModal.removeClass('modal-qd-v1');
-			elemModal.find('.modal-title').text('Parabens!');
-			elemModal.find('.modal-body').html('Você está logado, mais ainda não possui uma loja, cadastre uma agora mesmo. <br /><br /><button type="button" class="btn btn-primary btn-validate-token">cadastrar</button>');
-			elemModal.modal({backdrop: 'static', keyboard: false });
-			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+		sessionExpirated: function() {
+			var modal = Common.preparingModal({
+				doNotClose: true,
+				title: 'Usuário desconectado',
+				body: '<div class="text-center"><p class="bg-danger text-danger">Infelizmente você não esta logado.</p><video width="259" height="224" autoplay loop><source src="https://media.giphy.com/media/YqWBUAQAKbraw/giphy.mp4" type="video/mp4"></source></video><br /><a href="" class="btn btn-primary">Fazer login</a></div>'
+			});
 
-			elemModal.find('.btn-validate-token').on('click', function(){
-				elemModal.modal('hide');
+			$.removeCookie("qdToken");
+		},
+		messageUserLogged: function() {
+			var modal = Common.preparingModal({
+				doNotClose: true,
+				title: 'Parabens!',
+				body: 'Você está logado, mais ainda não possui uma loja, cadastre uma agora mesmo. <br /><br /><button type="button" class="btn btn-primary btn-validate-token">Cadastrar</button>'
+			});
+
+			modal.find('.btn-validate-token').on('click', function(){
+				modal.modal('hide');
 				Common.setStore(false);
 			});
 		},
 		setStore: function(withClose) {
-			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
-			var form  = $('<form class="cadastro"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="account">Account</label> <input type="text" class="form-control" id="account" name="account" placeholder="Account" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="key">Key</label> <input type="text" class="form-control" id="key" name="key" placeholder="Key" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="token">Token</label> <input type="text" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">cadastrar</button> </form>').appendTo(elemModal.find('.modal-body').empty());
-			elemModal.removeClass('modal-qd-v1');
-			elemModal.find('.modal-title').text('Informe os dados da instituição');
-			if (withClose) 
-				elemModal.find('.modal-title').append('<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
-			elemModal.modal({backdrop: 'static', keyboard: false });
-			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+			var form  = $('<form class="cadastro"> <div class="row"> <div class="col-xs-12"> <p>Para preencher essas informações acesse o License Manager e copie os dados da sua conta na aba "Contas".</p> <div class="form-group"> <label for="account">Account</label> <input type="text" class="form-control" id="account" name="account" placeholder="Account" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="key">Key</label> <input type="text" class="form-control" id="key" name="key" placeholder="Key" value=""> </div> </div> <div class="col-xs-12"> <div class="form-group"> <label for="token">Token</label> <input type="text" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">Cadastrar</button> </form>');
+			var modal = Common.preparingModal({
+				doNotClose: true,
+				title: 'Informe os dados da instituição',
+				body: form,
+				closeButton: withClose? true: false
+			});
 
 			form.on('submit', function(e){
 				e.preventDefault();
 
 				form.find(".request-message").remove();
-				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+				form.append('<div class="pull-right request-message"> <span class="label label-warning">Aguarde, estamos processando os dados ...</span> </div>');
 
 				$.ajax({
-					headers:window._QD_ajax_headers,
+					headers: Common._QD_ajax_headers,
 					type: 'POST',
-					url : window._QD_restful_url + '/pvt/set-store',
+					url : Common._QD_restful_url + '/pvt/set-store',
 					data: {
-						account: elemModal.find('input#account').val(),
-						key: elemModal.find('input#key').val(),
-						token: elemModal.find('input#token').val()
-					},
-					beforeSend: function(xhr) {
-						elemModal.find('.modal-body form .pull-right').remove();
-						elemModal.find('.modal-body form').append('<div class="pull-right"> <span class="label label-warning">Aguarde, estamos processando os dados</span> </div>');
+						account: form.find('input#account').val(),
+						key: form.find('input#key').val(),
+						token: form.find('input#token').val()
 					},
 					success: function(data) {
-						elemModal.find('.modal-body form .pull-right').remove();
+						form.find('.modal-body form .pull-right').remove();
 						if (data.success) {
-							elemModal.modal('hide');
+							modal.modal('hide');
 							Common.messageSetStoreSaved();
 						}
 						else
-							form.find(".request-message").text('Não foi possivel cadastrar store');
+							form.find(".request-message").html('<span class="label label-danger">Não foi possivel cadastrar store</span>');
 					},
 					error: function(data){
-						form.find(".request-message").text('Não foi possivel cadastrar store');
+						form.find(".request-message").html('<span class="label label-danger">Não foi possivel cadastrar store</span>');
 					}
 				});
 			});
 		},
 		messageSetStoreSaved: function() {
-			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
-			elemModal.removeClass('modal-qd-v1');
-			elemModal.find('.modal-title').text('Parabens!');
-			elemModal.find('.modal-body').html('Loja cadastrada com sucesso. <br /><br /><button type="button" class="btn btn-primary btn-fim">fim</button>');
-			elemModal.modal({backdrop: 'static', keyboard: false });
-			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
-			elemModal.find('.btn-fim').on('click', function(){
+			var modal = Common.preparingModal({
+				doNotClose: true,
+				title: 'Parabens!',
+				body: 'Loja cadastrada com sucesso. <br /><br /><button type="button" class="btn btn-primary btn-fim">Fim</button>'
+			});
+
+			modal.find('.btn-fim').on('click', function(){
 				window.location.reload();
 			});
-		}, 
+		},
 		qdLinkAddLoja: function() {
 			$('.qd-link-add-loja').on('click', function(){
-				Common.setStore(true);	
+				Common.setStore(true);
 				return false;
 			});
 		},
 		selectStore: function() {
 			var ulLojas = $('ul.dropdown-menu.store');
 			$.ajax({
-				headers:window._QD_ajax_headers,
+				headers: Common._QD_ajax_headers,
 				type: 'GET',
-				url : window._QD_restful_url + '/pvt/get-stores',
+				url : Common._QD_restful_url + '/pvt/get-stores',
 				success: function(data) {
-					for (var i in data.stores) {
+					for (var i in data.stores)
 						ulLojas.append('<li><a href="?store='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
-					}
-					
-					if(!window._QD_query_string.store)
+
+					if(!Common._QD_query_string.store)
 						window.location.search = 'store=' + data.stores[0].account;
 
-					$('.btn-default.dropdown-toggle.store').html(window._QD_query_string.store + ' <span class="caret"></span>');					
-				},
-				error: function(data){
-					
+					$('.btn-default.dropdown-toggle.store').html(Common._QD_query_string.store + ' <span class="caret"></span>');
 				}
 			});
 		},
+		preparingModal: function(opts) {
+			var defaults = {
+				doNotClose: false,
+				closeButton: false
+			};
+			var options = $.extend(defaults, opts);
+
+			var elemModal = $('.modal-qd-v1').clone().appendTo(document.body);
+			elemModal.removeClass('modal-qd-v1');
+			elemModal.find('.modal-title').text(options.title);
+			elemModal.find('.modal-body').html(options.body);
+
+			if (options.closeButton)
+				elemModal.find('.modal-title').append('<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+
+			if(options.doNotClose)
+				elemModal.modal({backdrop: 'static', keyboard: false });
+
+			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
+
+			return elemModal;
+		}
 	}
 }
 catch (e) {(typeof console !== "undefined" && typeof console.error === "function" && console.error("Houve um erro nos objetos. Detalhes: " + e.message)); }
