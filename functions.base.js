@@ -13,12 +13,13 @@ try {
 
 			Common.queryString();
 			Common.checkAuthentication();
-			// Common.analyticsQ();
+			
 		},
 		init: function() {
 			if (!Common.logged())
 				Common.loginModal();
 			else {
+				Common.analytics();
 				Common.selectStore();
 				Common.qdLinkAddLoja();
 
@@ -28,13 +29,15 @@ try {
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
-		analyticsQ: function() {
-			console.log("qui");	
+		analytics: function() {
 			$.ajax({
 				type: 'GET',
-				url : Common._QD_restful_url + '/analytics-q', 
+				headers: Common._QD_ajax_headers,
+				url : Common._QD_restful_url + '/pvt/analytics/login', 
+				data:Common._QD_ajax_headers,
 				success: function(data) {
-					console.log(data);
+					if (!data.success) 
+						window.open(data.link, "login", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
 				},
 				error: function(data){
 					
