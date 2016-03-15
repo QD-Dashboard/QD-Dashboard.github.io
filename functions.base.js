@@ -13,15 +13,17 @@ try {
 
 			Common.queryString();
 			Common.checkAuthentication();
-			
 		},
 		init: function() {
 			if (!Common.logged())
 				Common.loginModal();
 			else {
-				Common.analytics();
+				if(Common._QD_query_string.google_client_token)
+					return Common.googleAnalyticsSaveToken();
+
 				Common.selectStore();
 				Common.qdLinkAddLoja();
+				Common.googleAnalyticsLogin();
 
 				if(Common._QD_query_string.store)
 					Common.ordersChart();
@@ -29,18 +31,161 @@ try {
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
-		analytics: function() {
+		googleAnalyticsConf: function(google_client_token) {
+			$.ajax({
+				type: 'POST',
+				headers: Common._QD_ajax_headers,
+				url : Common._QD_restful_url + '/pvt/analytics/set-google-client-token.html',
+				data:{
+					google_client_token : google_client_token
+				},
+				success: function(data) {
+					Common.googleAnalyticsLoadProfiles();
+				}
+			});
+		},
+		googleAnalyticsLogin: function() {
+			$('.qd-link-configurar-google-analytics').on('click', function(){
+				$.ajax({
+					type: 'GET',
+					headers: Common._QD_ajax_headers,
+					url : Common._QD_restful_url + '/pvt/analytics/login.html',
+					success: function(data) {
+						if (!data.success) {
+							var win = window.open(data.link, "login", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
+							var timer = setInterval(function() {   
+								if(win.closed) {  
+									clearInterval(timer);  
+									if (win.google_client_token.indexOf('false') < 0) 
+										Common.googleAnalyticsConf(win.google_client_token);
+								}  
+							}, 1000); 
+						} else {
+							Common.googleAnalyticsLoadProfiles();
+						}
+					}
+				});
+				return false;
+			});
+		},
+		googleAnalyticsSaveToken: function() { 
+			if (Common._QD_query_string.google_client_token === "false") {
+				var modal = Common.preparingModal({
+					doNotClose: true,
+					title: 'Parabens!',
+					body: 'Lamento, não é possivel efetuar login no analytics, você não autorizou o aplicativo. <br /><br /><button type="button" class="btn btn-primary qd-btn-ok">OK</button>'
+				});
+
+				modal.find('.qd-btn-ok').on('click', function(){
+					modal.modal('hide');
+					window.close();	
+					return false;
+				});
+				window.google_client_token = false;
+			} else {
+				window.google_client_token = Common._QD_query_string.google_client_token;
+				var modal = Common.preparingModal({
+					doNotClose: true,
+					title: 'Parabens!',
+					body: 'Você está logado no google analytics. <br /><br /><button type="button" class="btn btn-primary qd-btn-ok">OK</button>'
+				});
+
+				modal.find('.qd-btn-ok').on('click', function(){
+					if (window.close) {
+						modal.modal('hide');
+						window.close();
+						return false;
+					}	
+				});
+			}
+		},
+		googleAnalyticsLoadByQuery: function() {
+			$('.qd-link-google-analytics-load').on('click', function(){
+				$.ajax({
+					type: 'GET',
+					headers: Common._QD_ajax_headers,
+					url : Common._QD_restful_url + '/pvt/analytics/query.html',
+					success: function(data) {
+						
+						console.log(data);	
+
+					},
+					error: function(data){
+						
+					}
+				});
+				return false;
+			});
+		},
+		googleAnalyticsLoadProfiles: function() {
 			$.ajax({
 				type: 'GET',
 				headers: Common._QD_ajax_headers,
-				url : Common._QD_restful_url + '/pvt/analytics/login', 
-				data:Common._QD_ajax_headers,
+				url : Common._QD_restful_url + '/pvt/analytics/profiles.html',
 				success: function(data) {
-					if (!data.success) 
-						window.open(data.link, "login", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
+					console.log(data);
+					var html = '<ol>';
+					var account;
+					var property;
+					var profile;
+					for(var i in data.accounts) {
+						account = data.accounts[i];
+						html += '<li>';
+						html += '<span><strong>Account:</strong>'+account.name+'</span>';
+						html += '<ol type="I">';
+						for(var j in account.properties) {
+							property = account.properties[j];
+							html += '<li>';
+							html += '<span><strong>Property:</strong>'+property.name+'</span>';
+
+							html += '<ol type="a">';
+							for(var k in property.profiles) {
+								profile = property.profiles[k];
+								html += '<li>';
+								html += '<span><strong>Profile:</strong><a class="profile_id" href="'+profile.id+'">'+profile.name+'</a></span>';
+								html += '</li>';
+							}
+							html += '</ol>';
+							html += '</li>';
+						}
+						html += '</ol>';
+						html += '</li>';
+					}
+					html += '</ol>';
+
+					html = $(html);
+
+					var modal = Common.preparingModal({
+						doNotClose: true,
+						title: 'Selecione um profile',
+						body: html
+					});
+
+					html.find('a').on('click', function(){
+						var google_client_profile_id = $(this).attr('href');
+						$.ajax({
+							type: 'POST',
+							headers: Common._QD_ajax_headers,
+							url : Common._QD_restful_url + '/pvt/analytics/set-profiles.html', 
+							data: {
+								google_client_profile_id: google_client_profile_id,
+								store_account:Common._QD_query_string.store
+							},
+							success: function(data) {
+								if (data.success) {
+									modal.modal('hide');
+								}
+							}
+						});
+						return false;
+					});
+
+					modal.find('.btn-validate-token').on('click', function(){
+						modal.modal('hide');
+					});
 				},
 				error: function(data){
-					
+					console.log(data);
 				}
 			});
 		},
@@ -271,6 +416,8 @@ try {
 				success: function(data) {
 					for (var i in data.stores)
 						ulLojas.append('<li><a href="?store='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
+
+					Common._QD_stores = data.stores;
 
 					if(!Common._QD_query_string.store)
 						window.location.search = 'store=' + data.stores[0].account;
