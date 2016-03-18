@@ -118,6 +118,17 @@ try {
 			});
 		},
 		googleAnalyticsLoadProfiles: function() {
+			if (Common._QD_stores) {
+				var store;
+				for(var i in Common._QD_stores) {
+					store = Common._QD_stores[i];
+					
+					if (store.account == Common._QD_query_string.store && store.ga_profile_id > 0)  {
+						return;
+					}
+				}
+			}
+
 			$.ajax({
 				type: 'GET',
 				headers: Common._QD_ajax_headers,
@@ -174,6 +185,7 @@ try {
 							success: function(data) {
 								if (data.success) {
 									modal.modal('hide');
+									window.location.reload();
 								}
 							}
 						});
@@ -217,46 +229,90 @@ try {
 			return true;
 		},
 		ordersChart: function() {
+			function padLeft(value, length) {
+			    return (value.toString().length < length) ? padLeft("0"+value, length):value;
+			}
+
+			var dateStartObject = new Date();
+			dateStartObject.setDate(dateStartObject.getDate() - 40);
+    		var dateStart = dateStartObject.getFullYear() +'-'+ padLeft((dateStartObject.getMonth()+1),2) +'-'+ padLeft(dateStartObject.getDate(),2);
+
+    		var dateEndObject = new Date();
+    		var dateEnd = dateEndObject.getFullYear() +'-'+ padLeft((dateEndObject.getMonth()+1),2) +'-'+ padLeft(dateEndObject.getDate(),2);
+
 			$.ajax({
 				headers: Common._QD_ajax_headers,
 				url: Common._QD_restful_report_url + "/pvt/report/orders-day",
 				dataType: "json",
-				data: {store: Common._QD_query_string.store}
-			}).done(function(data) {
-				var chartData = {
-					labels: data.chartOrdersLabel,
-					datasets: [
-						{
-							label: "Pedidos",
-							fillColor: "rgba(1, 112, 0, 0.2)",
-							strokeColor: "rgba(220,220,220,1)",
-							pointColor: "#014200",
-							pointStrokeColor: "#fff",
-							pointHighlightFill: "#fff",
-							pointHighlightStroke: "rgba(220,220,220,1)",
-							data: data.chartOrdersValue
+				cache:true,
+				data: {
+					store: Common._QD_query_string.store,
+					dateStart:dateStart,
+					dateEnd:dateEnd
+				}
+			}).done(function(datajson) {
+
+				var dias = 		  	  ['x'];
+				var ranks = 		  ['Rank VTEX'];
+				var compras = 		  ['Pedidos'];
+				var googleAnalytics = ['Pedidos GA'];
+
+				for(var i in datajson.chartOrdersLabel) {
+					dias[dias.length] = datajson.chartOrdersLabel[i];
+					ranks[ranks.length] = parseInt(datajson.chartOrdersPosition[i]);
+					compras[compras.length] = parseInt(datajson.chartOrdersValue[i]);
+					googleAnalytics[googleAnalytics.length] = parseInt(datajson.gaTransactions[i]);
+				}
+
+				var chart = c3.generate({
+					bindto: '#chart',
+					data: {
+						x: 'x',
+						columns: [
+							dias,
+							ranks,
+							compras,
+							googleAnalytics,
+						],
+						types: {
+							'Rank VTEX': 'area-spline',
+							'Pedidos': 'area-spline',
+							'Pedidos GA': 'area-spline'
 						},
-						{
-							label: "Rank",
-							fillColor: "rgba(151,187,205,0.2)",
-							strokeColor: "rgba(151,187,205,1)",
-							pointColor: "rgba(151,187,205,1)",
-							pointStrokeColor: "#fff",
-							pointHighlightFill: "#fff",
-							pointHighlightStroke: "rgba(151,187,205,1)",
-							data: data.chartOrdersPosition
+						colors: {
+							'Rank VTEX': '#4285f4',
+							'Pedidos': '#177943',
+							'Pedidos GA': '#771776'
+						},
+						labels: {
+				            format: {
+				                'Rank VTEX': d3.format(''),
+				                'Pedidos': d3.format(''),
+				                'Pedidos GA': d3.format(''),
+				            }
+				        }
+					},
+					grid: {
+						x: {
+							show: true
+						},
+						y: {
+							show: true
 						}
-					]
-				};
-
-				var canvas = document.getElementById("orders-chart");
-				var myNewChart = new Chart(canvas.getContext("2d")).Line(chartData, {
-					multiTooltipTemplate: "<%= datasetLabel %> - <%= value %>",
-					legendTemplate: '<ul class="<%=name.toLowerCase()%>-legend"><% for (var i=0; i<segments.length; i++){%><li><span style="background-color: <%=segments[i].fillColor%>"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>',
-					responsive: true
+					},
+					axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    },
+				    zoom: {
+				        enabled: true
+				    }
 				});
-
-				$(canvas).addClass("loaded").before('<b>Loja:</b> ' + data.store + '<Br /><b>Período:</b> ' + data.startDate + ' até ' + data.endDate);
 			});
 		},
 		loginModal: function() {
@@ -418,7 +474,6 @@ try {
 						ulLojas.append('<li><a href="?store='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
 
 					Common._QD_stores = data.stores;
-
 					if(!Common._QD_query_string.store)
 						window.location.search = 'store=' + data.stores[0].account;
 
