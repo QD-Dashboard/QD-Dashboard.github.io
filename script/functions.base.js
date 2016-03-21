@@ -26,7 +26,8 @@ try {
 				Common.googleAnalyticsLogin();
 
 				if(Common._QD_query_string.store)
-					Common.ordersChart();
+					Common.ordersByDayChart();
+					Common.ordersByMonthChart();
 			}
 		},
 		ajaxStop: function() {},
@@ -228,7 +229,7 @@ try {
 			Common._QD_ajax_headers = {'x-qd-auth': token };
 			return true;
 		},
-		ordersChart: function() {
+		ordersByDayChart: function() {
 			function padLeft(value, length) {
 			    return (value.toString().length < length) ? padLeft("0"+value, length):value;
 			}
@@ -242,7 +243,7 @@ try {
 
 			$.ajax({
 				headers: Common._QD_ajax_headers,
-				url: Common._QD_restful_report_url + "/pvt/report/orders-day",
+				url: Common._QD_restful_report_url + "/pvt/report/orders-by-day",
 				dataType: "json",
 				cache:true,
 				data: {
@@ -314,6 +315,44 @@ try {
 				    }
 				});
 
+			});
+		},
+		ordersByMonthChart: function() {
+			function padLeft(value, length) {
+			    return (value.toString().length < length) ? padLeft("0"+value, length):value;
+			}
+
+			var dateStartObject = new Date();
+			dateStartObject.setDate(dateStartObject.getDate() - 270);
+    		var dateStart = dateStartObject.getFullYear() +'-'+ padLeft((dateStartObject.getMonth()+1),2) +'-'+ padLeft(dateStartObject.getDate(),2);
+
+    		var dateEndObject = new Date();
+    		var dateEnd = dateEndObject.getFullYear() +'-'+ padLeft((dateEndObject.getMonth()+1),2) +'-'+ padLeft(dateEndObject.getDate(),2);
+
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_report_url + "/pvt/report/orders-by-month",
+				dataType: "json",
+				cache:true,
+				data: {
+					store: Common._QD_query_string.store,
+					dateStart:dateStart,
+					dateEnd:dateEnd
+				}
+			}).done(function(datajson) {
+
+				var dias = 		  	  ['x'];
+				var ranks = 		  ['Rank VTEX'];
+				var compras = 		  ['Pedidos'];
+				var googleAnalytics = ['Pedidos GA'];
+
+				for(var i in datajson.chartOrdersLabel) {
+					dias[dias.length] = datajson.chartOrdersLabel[i];
+					ranks[ranks.length] = parseInt(datajson.chartOrdersPosition[i]);
+					compras[compras.length] = parseInt(datajson.chartOrdersValue[i]);
+					googleAnalytics[googleAnalytics.length] = parseInt(datajson.gaTransactions[i]);
+				}
+				
 				var chartCombination = c3.generate({
 					bindto:'#chart-combination',
 				    data: {
