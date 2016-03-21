@@ -234,7 +234,7 @@ try {
 			}
 
 			var dateStartObject = new Date();
-			dateStartObject.setDate(dateStartObject.getDate() - 40);
+			dateStartObject.setDate(dateStartObject.getDate() - 20);
     		var dateStart = dateStartObject.getFullYear() +'-'+ padLeft((dateStartObject.getMonth()+1),2) +'-'+ padLeft(dateStartObject.getDate(),2);
 
     		var dateEndObject = new Date();
@@ -264,8 +264,8 @@ try {
 					googleAnalytics[googleAnalytics.length] = parseInt(datajson.gaTransactions[i]);
 				}
 
-				var chart = c3.generate({
-					bindto: '#chart',
+				var chartLines = c3.generate({
+					bindto: '#chart-lines',
 					data: {
 						x: 'x',
 						columns: [
@@ -313,6 +313,59 @@ try {
 				        enabled: true
 				    }
 				});
+
+				var chartCombination = c3.generate({
+					bindto:'#chart-combination',
+				    data: {
+				    	x: 'x',
+				        columns: [
+				            dias,
+							ranks,
+							compras,
+							googleAnalytics,
+				        ],
+				        type: 'bar',
+				        types: {
+				            'Rank VTEX': 'area-spline',
+				        },
+				        groups: [
+				            // ['Pedidos','Pedidos GA']
+				        ],
+				        colors: {
+							'Rank VTEX': '#4285f4',
+							'Pedidos': '#177943',
+							'Pedidos GA': '#771776'
+						},
+						labels: {
+				            format: {
+				                'Rank VTEX': d3.format(''),
+				                'Pedidos': d3.format(''),
+				                'Pedidos GA': d3.format(''),
+				            }
+				        }
+				    },
+				    axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    },
+				    grid: {
+						x: {
+							show: true
+						},
+						y: {
+							show: true
+						}
+					},
+					zoom: {
+				        enabled: true
+				    }
+				});
+
 			});
 		},
 		loginModal: function() {
