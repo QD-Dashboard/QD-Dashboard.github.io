@@ -35,7 +35,7 @@ try {
 		windowOnload: function() {},
 		qdLinkSettings: function() {
 			$('.qd-link-settings').click(function(){
-				var body  = $('<form class="checkToken"> <div class="row"> <div class="col-xs-12"> <p>Nós te mandamos uma chave de 6 dígitos no seu e-mail, é ela que você deve informar agora!</p><div class="form-group"> <label for="email">Chave de acesso com 6 dígitos: </label> <input type="tel" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-validate-token">Validar</button> </form>');
+				var body  = $('<button class="qd-connect-to-ga btn btn-primary">Conectar com Google Analytics</button> <p>Você esta conectado como: <span class="qd-ga-status">---</span></p>');
 				var modal = Common.preparingModal({
 					title: 'Configurações',
 					body: body
@@ -565,6 +565,8 @@ try {
 
 			if(options.doNotClose)
 				elemModal.modal({backdrop: 'static', keyboard: false });
+			else
+				elemModal.modal();
 
 			elemModal.on('hidden.bs.modal', function () { elemModal.remove(); });
 

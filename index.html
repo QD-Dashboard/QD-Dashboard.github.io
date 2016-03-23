@@ -7,14 +7,15 @@
 
 	<title>Quatro Digital - Dashboard</title>
 
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-
-	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-	<!-- Latest compiled and minified JavaScript -->
-
 	<link rel="stylesheet" href="script/c3.min.css">
 
+	<style>
+		.chart-wrapper{background: url("img/ajax-loader.gif") no-repeat center center; min-height: 20px;}
+		.chart-wrapper .cs{background:#FFF;}
+	</style>
+
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 	<script src="http://cdn.rawgit.com/nnnick/Chart.js/v1.0.2/Chart.min.js" charset="utf-8"></script>
 	<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js" charset="utf-8"></script>
@@ -30,10 +31,6 @@
 		ga('create', 'UA-37678622-7', 'auto');
 		ga('send', 'pageview');
 	</script>
-
-	<style>
-		.chart-wrapper{background: url("img/ajax-loader.gif") no-repeat center center; min-height: 20px;}
-	</style>
 </head>
 <body>
 	<nav class="navbar navbar-default">
