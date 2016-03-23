@@ -23,53 +23,59 @@ try {
 
 				Common.selectStore();
 				Common.qdLinkAddLoja();
-				Common.googleAnalyticsLogin();
 
-				if(Common._QD_query_string.store)
+				if(Common._QD_query_string.store){
+					Common.qdLinkSettings();
 					Common.ordersByDayChart();
 					Common.ordersByMonthChart();
+				}
 			}
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
+		qdLinkSettings: function() {
+			$('.qd-link-settings').click(function(){
+				var body  = $('<form class="checkToken"> <div class="row"> <div class="col-xs-12"> <p>Nós te mandamos uma chave de 6 dígitos no seu e-mail, é ela que você deve informar agora!</p><div class="form-group"> <label for="email">Chave de acesso com 6 dígitos: </label> <input type="tel" class="form-control" id="token" name="token" placeholder="Token" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-validate-token">Validar</button> </form>');
+				var modal = Common.preparingModal({
+					title: 'Configurações',
+					body: body
+				});
+
+				return false;
+			});
+		},
 		googleAnalyticsConf: function(google_client_token) {
 			$.ajax({
 				type: 'POST',
 				headers: Common._QD_ajax_headers,
-				url : Common._QD_restful_url + '/pvt/analytics/set-google-client-token.html',
-				data:{
-					google_client_token : google_client_token
-				},
-				success: function(data) {
-					Common.googleAnalyticsLoadProfiles();
-				}
+				url: Common._QD_restful_url + '/pvt/analytics/set-google-client-token.html',
+				data: {google_client_token: google_client_token },
+				success: Common.googleAnalyticsLoadProfiles
 			});
 		},
 		googleAnalyticsLogin: function() {
 			$('.qd-link-configurar-google-analytics').on('click', function(){
 				$.ajax({
-					type: 'GET',
 					headers: Common._QD_ajax_headers,
-					url : Common._QD_restful_url + '/pvt/analytics/login.html',
+					url: Common._QD_restful_url + '/pvt/analytics/login.html',
 					success: function(data) {
-						if (!data.success) {
-							var win = window.open(data.link, "login", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
-							var timer = setInterval(function() {   
-								if(win.closed) {  
-									clearInterval(timer);  
-									if (win.google_client_token.indexOf('false') < 0) 
-										Common.googleAnalyticsConf(win.google_client_token);
-								}  
-							}, 1000); 
-						} else {
-							Common.googleAnalyticsLoadProfiles();
-						}
+						if (data.success)
+							return Common.googleAnalyticsLoadProfiles();
+
+						var win = window.open(data.link, "qd_login_ga", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
+						var timer = setInterval(function() {
+							if(win.closed) {
+								clearInterval(timer);
+								if (win.google_client_token.indexOf('false') < 0)
+									Common.googleAnalyticsConf(win.google_client_token);
+							}
+						}, 200);
 					}
 				});
 				return false;
 			});
 		},
-		googleAnalyticsSaveToken: function() { 
+		googleAnalyticsSaveToken: function() {
 			if (Common._QD_query_string.google_client_token === "false") {
 				var modal = Common.preparingModal({
 					doNotClose: true,
@@ -79,11 +85,12 @@ try {
 
 				modal.find('.qd-btn-ok').on('click', function(){
 					modal.modal('hide');
-					window.close();	
+					window.close();
 					return false;
 				});
 				window.google_client_token = false;
-			} else {
+			}
+			else {
 				window.google_client_token = Common._QD_query_string.google_client_token;
 				var modal = Common.preparingModal({
 					doNotClose: true,
@@ -96,75 +103,58 @@ try {
 						modal.modal('hide');
 						window.close();
 						return false;
-					}	
-				});
-			}
-		},
-		googleAnalyticsLoadByQuery: function() {
-			$('.qd-link-google-analytics-load').on('click', function(){
-				$.ajax({
-					type: 'GET',
-					headers: Common._QD_ajax_headers,
-					url : Common._QD_restful_url + '/pvt/analytics/query.html',
-					success: function(data) {
-						
-						console.log(data);	
-
-					},
-					error: function(data){
-						
 					}
 				});
-				return false;
-			});
+			}
 		},
 		googleAnalyticsLoadProfiles: function() {
 			if (Common._QD_stores) {
 				var store;
 				for(var i in Common._QD_stores) {
 					store = Common._QD_stores[i];
-					
-					if (store.account == Common._QD_query_string.store && store.ga_profile_id > 0)  {
+
+					if (store.account == Common._QD_query_string.store && store.ga_profile_id > 0)
 						return;
-					}
 				}
 			}
 
 			$.ajax({
-				type: 'GET',
 				headers: Common._QD_ajax_headers,
-				url : Common._QD_restful_url + '/pvt/analytics/profiles.html',
+				url: Common._QD_restful_url + '/pvt/analytics/profiles.html',
 				success: function(data) {
-					console.log(data);
 					var html = '<ol>';
 					var account;
 					var property;
 					var profile;
+
 					for(var i in data.accounts) {
 						account = data.accounts[i];
 						html += '<li>';
 						html += '<span><strong>Account:</strong>'+account.name+'</span>';
 						html += '<ol type="I">';
+
 						for(var j in account.properties) {
 							property = account.properties[j];
 							html += '<li>';
 							html += '<span><strong>Property:</strong>'+property.name+'</span>';
-
 							html += '<ol type="a">';
+
 							for(var k in property.profiles) {
 								profile = property.profiles[k];
 								html += '<li>';
 								html += '<span><strong>Profile:</strong><a class="profile_id" href="'+profile.id+'">'+profile.name+'</a></span>';
 								html += '</li>';
 							}
+
 							html += '</ol>';
 							html += '</li>';
 						}
+
 						html += '</ol>';
 						html += '</li>';
 					}
-					html += '</ol>';
 
+					html += '</ol>';
 					html = $(html);
 
 					var modal = Common.preparingModal({
@@ -174,13 +164,12 @@ try {
 					});
 
 					html.find('a').on('click', function(){
-						var google_client_profile_id = $(this).attr('href');
 						$.ajax({
 							type: 'POST',
 							headers: Common._QD_ajax_headers,
-							url : Common._QD_restful_url + '/pvt/analytics/set-profiles.html', 
+							url: Common._QD_restful_url + '/pvt/analytics/set-profiles.html',
 							data: {
-								google_client_profile_id: google_client_profile_id,
+								google_client_profile_id: $(this).attr('href'),
 								store_account:Common._QD_query_string.store
 							},
 							success: function(data) {
@@ -206,6 +195,7 @@ try {
 			$(document).ajaxComplete(function(event, XMLHttpRequest, ajaxOptions) {
 				if(XMLHttpRequest.status != 401)
 					return;
+
 				Common.sessionExpirated();
 			});
 		},
@@ -213,6 +203,7 @@ try {
 			var items = (document.location.search || "").replace("?", "").split("&");
 			var query = {};
 			var item;
+
 			for(var i in items){
 				item = items[i].split("=");
 				query[item[0]] = item[1] || "";
@@ -231,28 +222,26 @@ try {
 		},
 		ordersByDayChart: function() {
 			function padLeft(value, length) {
-			    return (value.toString().length < length) ? padLeft("0"+value, length):value;
+			    return (value.toString().length < length)? padLeft("0" + value, length): value;
 			}
 
 			var dateStartObject = new Date();
 			dateStartObject.setDate(dateStartObject.getDate() - 20);
-    		var dateStart = dateStartObject.getFullYear() +'-'+ padLeft((dateStartObject.getMonth()+1),2) +'-'+ padLeft(dateStartObject.getDate(),2);
+    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
 
     		var dateEndObject = new Date();
-    		var dateEnd = dateEndObject.getFullYear() +'-'+ padLeft((dateEndObject.getMonth()+1),2) +'-'+ padLeft(dateEndObject.getDate(),2);
+    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
 
 			$.ajax({
 				headers: Common._QD_ajax_headers,
 				url: Common._QD_restful_report_url + "/pvt/report/orders-by-day",
 				dataType: "json",
-				cache:true,
 				data: {
 					store: Common._QD_query_string.store,
-					dateStart:dateStart,
-					dateEnd:dateEnd
+					dateStart: dateStart,
+					dateEnd: dateEnd
 				}
 			}).done(function(datajson) {
-
 				var dias = 		  	  ['x'];
 				var ranks = 		  ['Rank VTEX'];
 				var compras = 		  ['Pedidos'];
@@ -266,14 +255,14 @@ try {
 				}
 
 				var chartLines = c3.generate({
-					bindto: '#chart-lines',
+					bindto: '#orders-by-day',
 					data: {
 						x: 'x',
 						columns: [
 							dias,
 							ranks,
 							compras,
-							googleAnalytics,
+							googleAnalytics
 						],
 						types: {
 							'Rank VTEX': 'area-spline',
@@ -289,17 +278,13 @@ try {
 				            format: {
 				                'Rank VTEX': d3.format(''),
 				                'Pedidos': d3.format(''),
-				                'Pedidos GA': d3.format(''),
+				                'Pedidos GA': d3.format('')
 				            }
 				        }
 					},
 					grid: {
-						x: {
-							show: true
-						},
-						y: {
-							show: true
-						}
+						x: {show: true },
+						y: {show: true }
 					},
 					axis: {
 				        x: {
@@ -310,37 +295,33 @@ try {
 				            },
 				        }
 				    },
-				    zoom: {
-				        enabled: true
-				    }
+				    zoom: {enabled: true }
 				});
 
 			});
 		},
 		ordersByMonthChart: function() {
 			function padLeft(value, length) {
-			    return (value.toString().length < length) ? padLeft("0"+value, length):value;
+			    return (value.toString().length < length)? padLeft("0" + value, length): value;
 			}
 
 			var dateStartObject = new Date();
-			dateStartObject.setDate(dateStartObject.getDate() - 270);
-    		var dateStart = dateStartObject.getFullYear() +'-'+ padLeft((dateStartObject.getMonth()+1),2) +'-'+ padLeft(dateStartObject.getDate(),2);
+			dateStartObject.setDate(dateStartObject.getDate() - 365);
+    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
 
     		var dateEndObject = new Date();
-    		var dateEnd = dateEndObject.getFullYear() +'-'+ padLeft((dateEndObject.getMonth()+1),2) +'-'+ padLeft(dateEndObject.getDate(),2);
+    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
 
 			$.ajax({
 				headers: Common._QD_ajax_headers,
 				url: Common._QD_restful_report_url + "/pvt/report/orders-by-month",
 				dataType: "json",
-				cache:true,
 				data: {
 					store: Common._QD_query_string.store,
-					dateStart:dateStart,
-					dateEnd:dateEnd
+					dateStart: dateStart,
+					dateEnd: dateEnd
 				}
 			}).done(function(datajson) {
-
 				var dias = 		  	  ['x'];
 				var ranks = 		  ['Rank VTEX'];
 				var compras = 		  ['Pedidos'];
@@ -352,16 +333,16 @@ try {
 					compras[compras.length] = parseInt(datajson.chartOrdersValue[i]);
 					googleAnalytics[googleAnalytics.length] = parseInt(datajson.gaTransactions[i]);
 				}
-				
+
 				var chartCombination = c3.generate({
-					bindto:'#chart-combination',
+					bindto:'#orders-by-month',
 				    data: {
 				    	x: 'x',
 				        columns: [
 				            dias,
 							ranks,
 							compras,
-							googleAnalytics,
+							googleAnalytics
 				        ],
 				        type: 'bar',
 				        types: {
@@ -379,7 +360,7 @@ try {
 				            format: {
 				                'Rank VTEX': d3.format(''),
 				                'Pedidos': d3.format(''),
-				                'Pedidos GA': d3.format(''),
+				                'Pedidos GA': d3.format('')
 				            }
 				        }
 				    },
@@ -393,16 +374,10 @@ try {
 				        }
 				    },
 				    grid: {
-						x: {
-							show: true
-						},
-						y: {
-							show: true
-						}
+						x: {show: true },
+						y: {show: true }
 					},
-					zoom: {
-				        enabled: true
-				    }
+					zoom: {enabled: true }
 				});
 
 			});
@@ -415,7 +390,7 @@ try {
 				body: form
 			});
 
-			form.on('submit', function(e){
+			form.on('submit', function(e) {
 				e.preventDefault();
 
 				form.find(".request-message").remove();
@@ -423,7 +398,7 @@ try {
 
 				$.ajax({
 					type: 'POST',
-					url : Common._QD_restful_url + '/get-token',
+					url: Common._QD_restful_url + '/get-token',
 					data: {email: form.find('input#email').val() },
 					success: function(data) {
 						Common._QD_ajax_headers = {'x-qd-auth': data.xQdAuth };
@@ -517,7 +492,7 @@ try {
 				$.ajax({
 					headers: Common._QD_ajax_headers,
 					type: 'POST',
-					url : Common._QD_restful_url + '/pvt/set-store',
+					url: Common._QD_restful_url + '/pvt/set-store',
 					data: {
 						account: form.find('input#account').val(),
 						key: form.find('input#key').val(),
@@ -560,7 +535,7 @@ try {
 			$.ajax({
 				headers: Common._QD_ajax_headers,
 				type: 'GET',
-				url : Common._QD_restful_url + '/pvt/get-stores',
+				url: Common._QD_restful_url + '/pvt/get-stores',
 				success: function(data) {
 					for (var i in data.stores)
 						ulLojas.append('<li><a href="?store='+data.stores[i].account+'">'+data.stores[i].account+'</a></li>');
@@ -623,4 +598,4 @@ try {
 		Common.run();
 	})();
 }
-catch (e) {(typeof console !== "undefined" && typeof console.error === "function" && $("body").addClass('jsFullLoaded jsFullLoadedError') && console.error("Houve um erro ao iniciar os objetos. Detalhes: " + e.message)); }
+catch (e) {(typeof console !== "undefined" && typeof console.error === "function" && $(document.body).addClass('jsFullLoaded jsFullLoadedError') && console.error("Houve um erro ao iniciar os objetos. Detalhes: " + e.message)); }
