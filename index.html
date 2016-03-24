@@ -11,8 +11,14 @@
 	<link rel="stylesheet" href="script/c3.min.css">
 
 	<style>
+		.site{margin:0 10px;}
 		.chart-wrapper{background: url("img/ajax-loader.gif") no-repeat center center; min-height: 20px;}
 		.chart-wrapper .c3{background:#FFF;}
+		.qd-loading-full .qd-loading {display: block; width: 140px; height: 25px; padding-left: 20px; padding-right: 20px; color: #8a6d3b; background-color: #fcf8e3; border: 1px solid #faebcc; border-top:0px; border-radius:0px 0px 3px 3px; position: fixed; top:0%; left:50%; margin-left: -70px; z-index: 9999; } 
+		.qd-loading-local {display: none;}
+		.qd-loading-full .qd-loading-local {display: inline-block; margin: 10px; }
+		.logo {float: left; margin-right: 10px; max-width: 24px; } 
+		.c3 svg{font:12px sans-serif}
 	</style>
 
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -34,7 +40,20 @@
 </head>
 <body>
 	<nav class="navbar navbar-default">
-		<div class="container">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+					<span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="//quatrodigital.com.br" target="_blank">
+					<img class="logo" src="https://images-lso-opensocial.googleusercontent.com/gadgets/proxy?url=http://dashboard.quatrodigital.com.br/img/logo-google-120x120.png&amp;container=lso&amp;gadget=a&amp;rewriteMime=image/*&amp;resize_h=120&amp;resize_w=120&amp;no_expand=1&amp;fallback_url=https://www.gstatic.com/ac/security/default_app_icon_0_cf46a687bed2dac7.png" class="pe hx "> 
+					Quatro Digital					
+				</a>
+			</div>
+
 			<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 				<ul class="nav navbar-nav">
 					<li><a href="#" class="qd-link-add-loja">Adicionar Loja</a></li>
@@ -52,42 +71,55 @@
 		</div>
 	</nav>
 
-	<div class="container">
-		<div class="row">
-			<div class="col-xs-12">
-				<div class="text-center">
-					<h1>
-						<img src="img/logo_quatro_800x328.png" alt="Quatro Digital" class="img-responsive center-block">
-					</h1>
+	<div class="site">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-xs-12">
+					<h3>Dashboard</h3>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Número de pedidos por dia</h4>
+					<div class="chart-wrapper">
+						<div id="orders-by-day"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Número de pedidos por mês</h4>
+					<div class="chart-wrapper">
+						<div id="orders-by-month"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Valor de pedidos por mês</h4>
+					<div class="chart-wrapper">
+						<div id="orders-value-by-month"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Valor de pedidos por mês (Marktplace x Loja)</h4>
+					<div class="chart-wrapper">
+						<div id="orders-by-month-mark-x-fulfillment"></div>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<div class="container">
-		<div class="row">
-			<div class="col-xs-12">
-				<h3>Dashboard</h3>
-			</div>
-		</div>
-
-		<div class="row">
-			<div class="col-xs-12">
-				<h4>Pedidos por dia</h4>
-				<div class="chart-wrapper">
-					<div id="orders-by-day"></div>
-				</div>
-			</div>
-		</div>
-
-		<div class="row">
-			<div class="col-xs-12">
-				<h4>Pedidos por mês</h4>
-				<div class="chart-wrapper">
-					<div id="orders-by-month"></div>
-				</div>
-			</div>
-		</div>
+	<!-- Aviso de loading -->
+	<div class="qd-loading">
+		<p>Carregando <img src="img/ajax-loader2.gif" /></p>
 	</div>
 
 	<!-- Modal -->

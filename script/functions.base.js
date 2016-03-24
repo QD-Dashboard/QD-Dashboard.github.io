@@ -4,8 +4,27 @@
 "function"!==typeof String.prototype.trim&&(String.prototype.trim=function(){return this.replace(/^\s+|\s+$/g,"")});
 "function"!==typeof String.prototype.replaceSpecialChars&&(String.prototype.replaceSpecialChars=function(){var b={"\u00e7": "c","\u00e6": "ae","\u0153": "oe","\u00e1": "a","\u00e9": "e","\u00ed": "i","\u00f3": "o","\u00fa": "u","\u00e0": "a","\u00e8": "e","\u00ec": "i","\u00f2": "o","\u00f9": "u","\u00e4": "a","\u00eb": "e","\u00ef": "i","\u00f6": "o","\u00fc": "u","\u00ff": "y","\u00e2": "a","\u00ea": "e","\u00ee": "i","\u00f4": "o","\u00fb": "u","\u00e5": "a","\u00e3": "a","\u00f8": "o","\u00f5": "o",u: "u","\u00c1": "A","\u00c9": "E", "\u00cd": "I","\u00d3": "O","\u00da": "U","\u00ca": "E","\u00d4": "O","\u00dc": "U","\u00c3": "A","\u00d5": "O","\u00c0": "A","\u00c7": "C"};return this.replace(/[\u00e0-\u00fa]/ig,function(a){return"undefined"!=typeof b[a]?b[a]: a})});
 Array.prototype.indexOf||(Array.prototype.indexOf=function(d,e){var a;if(null==this)throw new TypeError('"this" is null or not defined');var c=Object(this),b=c.length>>>0;if(0===b)return-1;a=+e||0;Infinity===Math.abs(a)&&(a=0);if(a>=b)return-1;for(a=Math.max(0<=a?a: b-Math.abs(a),0);a<b;){if(a in c&&c[a]===d)return a;a++}return-1});
+function qd_number_format(b,c,d,e){b=(b+"").replace(/[^0-9+\-Ee.]/g,"");b=isFinite(+b)?+b:0;c=isFinite(+c)?Math.abs(c):0;e="undefined"===typeof e?",":e;d="undefined"===typeof d?".":d;var a="",a=function(a,b){var c=Math.pow(10,b);return""+(Math.round(a*c)/c).toFixed(b)},a=(c?a(b,c):""+Math.round(b)).split(".");3<a[0].length&&(a[0]=a[0].replace(/\B(?=(?:\d{3})+(?!\d))/g,e));(a[1]||"").length<c&&(a[1]=a[1]||"",a[1]+=Array(c-a[1].length+1).join("0"));return a.join(d)};
 
 try {
+	var Tools = {
+		chartMonetaryFormat: function (value) { 
+			return "R$ " + qd_number_format(value, 2, ",", "."); 
+		},
+		chartMonetaryFormatRounded: function (value) {
+			if(value > 1000) 
+				return "R$ " + qd_number_format(value / 1000, 2, ",", ".") + "k"; 
+			
+			return "R$ " + qd_number_format(value, 2, ",", "."); 
+		},
+		chartMonetaryFormatRoundedWithoutDecimal: function (value) {
+			if(value > 1000) 
+				return "R$ " + qd_number_format(Math.floor(value / 1000), 0, ",", ".") + "k"; 
+			
+			return "R$ " + qd_number_format(value, 2, ",", "."); 
+		}
+	};
+
 	var Common = {
 		run: function() {
 			Common._QD_restful_url = "http://dashboardapi.quatrodigital.com.br";
@@ -13,6 +32,7 @@ try {
 
 			Common.queryString();
 			Common.checkAuthentication();
+			Common.loading();
 		},
 		init: function() {
 			if (!Common.logged())
@@ -28,20 +48,65 @@ try {
 					Common.qdLinkSettings();
 					Common.ordersByDayChart();
 					Common.ordersByMonthChart();
+					Common.ordersValueByMonthChart();
+					Common.ordersByMonthMarkXFulfillmentChart();
 				}
 			}
 		},
 		ajaxStop: function() {},
 		windowOnload: function() {},
+		loading: function() {
+			$(document).ajaxStart(function() {
+				$('.qd-loading').show();
+				$(document.body).addClass('qd-loading-full').addClass('modal-open');
+			});
+			$(document).ajaxStop(function() {
+				$('.qd-loading').hide();
+				$(document.body).removeClass('qd-loading-full').removeClass('modal-open');
+			});
+		},
 		qdLinkSettings: function() {
-			$('.qd-link-settings').click(function(){
-				var body  = $('<button class="qd-connect-to-ga btn btn-primary">Conectar com Google Analytics</button> <p>Você esta conectado como: <span class="qd-ga-status">---</span></p>');
+			$('.qd-link-settings').click(function() {
 				var modal = Common.preparingModal({
 					title: 'Configurações',
-					body: body
+					closeButton: true,
+					body: '<div class="row"><div class="col-xs-12"><h5><strong>Google Analytics</strong></h5><p><img src="img/ajax-loader.gif" /></p></div></div>'
 				});
 
+				Common.getGaConnectionInfo(modal);
+
 				return false;
+			});
+		},
+		getGaConnectionInfo: function(modal) {
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				type: 'POST',
+				url: Common._QD_restful_url + '/pvt/analytics/connected',
+				data: {
+					store: Common._QD_query_string.store
+				},
+				dataType:'json',
+				success: function(data) {
+					console.log(data);
+					if (data.success) {
+						if (data.profileIdConfigured)
+							modal.find('p').html('Você esta conectado como: <span class="qd-ga-status bg-info"> ' + data.accountName + ' &raquo; ' + data.propertyName + ' (' + data.propertyId + ') &raquo; ' + data.profileName + ' </span>');
+						else
+							$('<button class="qd-link-to-ga btn btn-primary">Vincular o GA com ' + Common._QD_query_string.store + '</button>')
+							.appendTo(modal.find('p').empty()).after('<img class="qd-loading-local" src="img/ajax-loader.gif" />')
+							.click(function(){
+								var b = $(this);
+								b.attr('disabled',true);
+								Common.googleAnalyticsLoadProfiles(function(){
+									b.attr('disabled',false);
+								});
+							});
+					}
+					else {
+						$('<button class="qd-connect-to-ga btn btn-primary">Conectar com Google Analytics</button>').appendTo(modal.find('p').empty()).click(Common.googleAnalyticsLogin);
+					}						
+				}
 			});
 		},
 		googleAnalyticsConf: function(google_client_token) {
@@ -49,30 +114,27 @@ try {
 				type: 'POST',
 				headers: Common._QD_ajax_headers,
 				url: Common._QD_restful_url + '/pvt/analytics/set-google-client-token.html',
-				data: {google_client_token: google_client_token },
+				data: { google_client_token: google_client_token },
 				success: Common.googleAnalyticsLoadProfiles
 			});
 		},
 		googleAnalyticsLogin: function() {
-			$('.qd-link-configurar-google-analytics').on('click', function(){
-				$.ajax({
-					headers: Common._QD_ajax_headers,
-					url: Common._QD_restful_url + '/pvt/analytics/login.html',
-					success: function(data) {
-						if (data.success)
-							return Common.googleAnalyticsLoadProfiles();
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_url + '/pvt/analytics/login.html',
+				success: function(data) {
+					if (data.success)
+						return Common.googleAnalyticsLoadProfiles();
 
-						var win = window.open(data.link, "qd_login_ga", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
-						var timer = setInterval(function() {
-							if(win.closed) {
-								clearInterval(timer);
-								if (win.google_client_token.indexOf('false') < 0)
-									Common.googleAnalyticsConf(win.google_client_token);
-							}
-						}, 200);
-					}
-				});
-				return false;
+					var win = window.open(data.link, "qd_login_ga", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
+					var timer = setInterval(function() {
+						if(win.closed) {
+							clearInterval(timer);
+							if (win.google_client_token && win.google_client_token.indexOf('false') < 0)
+								Common.googleAnalyticsConf(win.google_client_token);
+						}
+					}, 200);
+				}
 			});
 		},
 		googleAnalyticsSaveToken: function() {
@@ -107,7 +169,7 @@ try {
 				});
 			}
 		},
-		googleAnalyticsLoadProfiles: function() {
+		googleAnalyticsLoadProfiles: function(callbackOnClose) {
 			if (Common._QD_stores) {
 				var store;
 				for(var i in Common._QD_stores) {
@@ -130,19 +192,19 @@ try {
 					for(var i in data.accounts) {
 						account = data.accounts[i];
 						html += '<li>';
-						html += '<span><strong>Account:</strong>'+account.name+'</span>';
+						html += '<span><strong>Conta: </strong>' + account.name + '</span>';
 						html += '<ol type="I">';
 
 						for(var j in account.properties) {
 							property = account.properties[j];
 							html += '<li>';
-							html += '<span><strong>Property:</strong>'+property.name+'</span>';
+							html += '<span><strong>Propriedade: </strong>' + property.name + '</span>';
 							html += '<ol type="a">';
 
 							for(var k in property.profiles) {
 								profile = property.profiles[k];
 								html += '<li>';
-								html += '<span><strong>Profile:</strong><a class="profile_id" href="'+profile.id+'">'+profile.name+'</a></span>';
+								html += '<span><strong>Visualizaçã: </strong><a class="profile_id" href="' + profile.id + '">' + profile.name + '</a></span>';
 								html += '</li>';
 							}
 
@@ -158,7 +220,7 @@ try {
 					html = $(html);
 
 					var modal = Common.preparingModal({
-						doNotClose: true,
+						closeButton: true,
 						title: 'Selecione um profile',
 						body: html
 					});
@@ -181,7 +243,13 @@ try {
 						});
 						return false;
 					});
-
+					
+					if (callbackOnClose) {
+						modal.on('hide.bs.modal', function(){
+							callbackOnClose();
+						});	
+					}
+					
 					modal.find('.btn-validate-token').on('click', function(){
 						modal.modal('hide');
 					});
@@ -226,7 +294,7 @@ try {
 			}
 
 			var dateStartObject = new Date();
-			dateStartObject.setDate(dateStartObject.getDate() - 20);
+			dateStartObject.setDate(dateStartObject.getDate() - 30);
     		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
 
     		var dateEndObject = new Date();
@@ -242,15 +310,15 @@ try {
 					dateEnd: dateEnd
 				}
 			}).done(function(datajson) {
-				var dias = 		  	  ['x'];
+				var days = 		  	  ['x'];
 				var ranks = 		  ['Rank VTEX'];
-				var compras = 		  ['Pedidos'];
+				var orders = 		  ['Pedidos'];
 				var googleAnalytics = ['Pedidos GA'];
 
 				for(var i in datajson.chartOrdersLabel) {
-					dias[dias.length] = datajson.chartOrdersLabel[i];
+					days[days.length] = datajson.chartOrdersLabel[i];
 					ranks[ranks.length] = parseInt(datajson.chartOrdersPosition[i]);
-					compras[compras.length] = parseInt(datajson.chartOrdersValue[i]);
+					orders[orders.length] = parseInt(datajson.chartOrdersValue[i]);
 					googleAnalytics[googleAnalytics.length] = parseInt(datajson.gaTransactions[i]);
 				}
 
@@ -259,9 +327,9 @@ try {
 					data: {
 						x: 'x',
 						columns: [
-							dias,
+							days,
 							ranks,
-							compras,
+							orders,
 							googleAnalytics
 						],
 						types: {
@@ -294,8 +362,7 @@ try {
 				                multiline: false
 				            },
 				        }
-				    },
-				    zoom: {enabled: true }
+				    }
 				});
 
 			});
@@ -322,15 +389,15 @@ try {
 					dateEnd: dateEnd
 				}
 			}).done(function(datajson) {
-				var dias = 		  	  ['x'];
+				var days = 		  	  ['x'];
 				var ranks = 		  ['Rank VTEX'];
-				var compras = 		  ['Pedidos'];
+				var orders = 		  ['Pedidos'];
 				var googleAnalytics = ['Pedidos GA'];
 
 				for(var i in datajson.chartOrdersLabel) {
-					dias[dias.length] = datajson.chartOrdersLabel[i];
+					days[days.length] = datajson.chartOrdersLabel[i];
 					ranks[ranks.length] = parseInt(datajson.chartOrdersPosition[i]);
-					compras[compras.length] = parseInt(datajson.chartOrdersValue[i]);
+					orders[orders.length] = parseInt(datajson.chartOrdersValue[i]);
 					googleAnalytics[googleAnalytics.length] = parseInt(datajson.gaTransactions[i]);
 				}
 
@@ -339,18 +406,15 @@ try {
 				    data: {
 				    	x: 'x',
 				        columns: [
-				            dias,
+				            days,
 							ranks,
-							compras,
+							orders,
 							googleAnalytics
 				        ],
 				        type: 'bar',
 				        types: {
 				            'Rank VTEX': 'area-spline',
 				        },
-				        groups: [
-				            // ['Pedidos','Pedidos GA']
-				        ],
 				        colors: {
 							'Rank VTEX': '#4285f4',
 							'Pedidos': '#177943',
@@ -376,8 +440,176 @@ try {
 				    grid: {
 						x: {show: true },
 						y: {show: true }
+					}
+				});
+
+			});
+		},
+		ordersValueByMonthChart: function() {
+			function padLeft(value, length) {
+			    return (value.toString().length < length)? padLeft("0" + value, length): value;
+			}
+
+			var dateStartObject = new Date();
+			dateStartObject.setDate(dateStartObject.getDate() - 365);
+    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
+
+    		var dateEndObject = new Date();
+    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
+
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_report_url + "/pvt/report/orders-value-by-month",
+				dataType: "json",
+				data: {
+					store: Common._QD_query_string.store,
+					dateStart: dateStart,
+					dateEnd: dateEnd
+				}
+			}).done(function(datajson) {
+				var days = 		  	  ['x'];
+				var orders = 		  ['Pedidos'];
+				var googleAnalytics = ['Pedidos GA'];
+				var invoicedOrders = ['Pedidos Faturados'];
+
+				for(var i in datajson.chartOrdersLabel) {
+					days[days.length] = datajson.chartOrdersLabel[i];
+					orders[orders.length] = datajson.chartOrdersValue[i];
+					googleAnalytics[googleAnalytics.length] = datajson.gaTransactions[i];
+					invoicedOrders[invoicedOrders.length] = datajson.chartInvoicedOrdersValue[i];
+				}
+
+				var chartLines = c3.generate({
+					bindto: '#orders-value-by-month',
+					data: {
+						x: 'x',
+						columns: [
+							days,
+							orders,
+							invoicedOrders,
+							googleAnalytics
+						],
+						type: 'bar',
+						// groups: [['Pedidos', 'Pedidos Faturados'] ],
+						colors: {
+							'Pedidos': '#177943',
+							'Pedidos GA': '#771776'
+						},
+						labels: {
+				            format: {
+				                'Pedidos': Tools.chartMonetaryFormatRounded,
+				                'Pedidos GA': Tools.chartMonetaryFormatRounded
+				            }
+				        }
 					},
-					zoom: {enabled: true }
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                format: Tools.chartMonetaryFormatRoundedWithoutDecimal
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	format: {
+				    		value: Tools.chartMonetaryFormat
+						}
+					}	
+				});
+
+			});
+		},
+		ordersByMonthMarkXFulfillmentChart: function() {
+			function padLeft(value, length) {
+			    return (value.toString().length < length)? padLeft("0" + value, length): value;
+			}
+
+			var dateStartObject = new Date();
+			dateStartObject.setDate(dateStartObject.getDate() - 365);
+    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
+
+    		var dateEndObject = new Date();
+    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
+
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_report_url + "/pvt/report/orders-by-month-mark-x-fulfillment",
+				dataType: "json",
+				data: {
+					store: Common._QD_query_string.store,
+					dateStart: dateStart,
+					dateEnd: dateEnd
+				}
+			}).done(function(datajson) {
+				var days = 		   ['x'];
+				var marketplace =  ['Loja'];
+				var fulfillment =  ['Marketplace'];
+				var total = 	   ['Total'];
+
+				for(var i in datajson.chartOrdersLabel) {
+					days[days.length] = datajson.chartOrdersLabel[i];
+					marketplace[marketplace.length] =  datajson.chartOrdersValueMarketplace[i];
+					fulfillment[fulfillment.length] =  datajson.chartOrdersValueFulfillment[i];
+					total[total.length] = 	   datajson.chartOrdersValue[i];
+				}
+
+				var chartLines = c3.generate({
+					bindto: '#orders-by-month-mark-x-fulfillment',
+					data: {
+						x: 'x',
+						columns: [
+							days,
+							total,
+							marketplace,
+							fulfillment
+						],
+						type: 'bar',
+						colors: {
+							'Marketplace':  '#4285f4',
+							'Loja':  		'#177943',
+							'Total': 		'#771776'
+						},
+						labels: {
+				            format: {
+				                'Marketplace': Tools.chartMonetaryFormatRounded,
+				                'Loja': Tools.chartMonetaryFormatRounded,
+				                'Total': Tools.chartMonetaryFormatRounded,
+				            }
+				        }
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                format: Tools.chartMonetaryFormatRoundedWithoutDecimal
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	format: {
+				    		value: Tools.chartMonetaryFormat
+						}
+					}	
 				});
 
 			});
