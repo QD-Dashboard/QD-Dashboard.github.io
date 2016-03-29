@@ -33,8 +33,18 @@ try {
 			Common.queryString();
 			Common.checkAuthentication();
 			Common.loading();
+
+			Common._QD_color = { 
+				vtex_ranks : '#F44336',
+				vtex_orders : '#673AB7',
+				vtex_orders_marktplace : '#03A9F4',
+				vtex_orders_fulfillment : '#4CAF50',
+				vtex_orders_invoiced : '#FFEB3B',
+				ga_orders : '#795548'
+			} 
 		},
 		init: function() {
+
 			if (!Common.logged())
 				Common.loginModal();
 			else {
@@ -50,6 +60,7 @@ try {
 					Common.ordersByMonthChart();
 					Common.ordersValueByMonthChart();
 					Common.ordersByMonthMarkXFulfillmentChart();
+					Common.ordersByMonthPaymentType();
 				}
 			}
 		},
@@ -88,7 +99,6 @@ try {
 				},
 				dataType:'json',
 				success: function(data) {
-					console.log(data);
 					if (data.success) {
 						if (data.profileIdConfigured)
 							modal.find('p').html('Você esta conectado como: <span class="qd-ga-status bg-info"> ' + data.accountName + ' &raquo; ' + data.propertyName + ' (' + data.propertyId + ') &raquo; ' + data.profileName + ' </span>');
@@ -255,7 +265,7 @@ try {
 					});
 				},
 				error: function(data){
-					console.log(data);
+				
 				}
 			});
 		},
@@ -310,45 +320,37 @@ try {
 					dateEnd: dateEnd
 				}
 			}).done(function(datajson) {
-				var days = 		  	  ['x'];
-				var ranks = 		  ['Rank VTEX'];
-				var orders = 		  ['Pedidos'];
-				var googleAnalytics = ['Pedidos GA'];
-
-				for(var i in datajson.chartOrdersLabel) {
-					days[days.length] = datajson.chartOrdersLabel[i];
-					ranks[ranks.length] = parseInt(datajson.chartOrdersPosition[i]);
-					orders[orders.length] = parseInt(datajson.chartOrdersValue[i]);
-					googleAnalytics[googleAnalytics.length] = parseInt(datajson.gaTransactions[i]);
-				}
+				datajson.chartOrdersLabel.unshift('x');
+				datajson.chartOrdersPosition.unshift('data1')
+				datajson.chartOrdersValue.unshift('data2')
+				datajson.gaTransactions.unshift('data3')
 
 				var chartLines = c3.generate({
 					bindto: '#orders-by-day',
 					data: {
 						x: 'x',
 						columns: [
-							days,
-							ranks,
-							orders,
-							googleAnalytics
+							datajson.chartOrdersLabel,
+							datajson.chartOrdersPosition,
+							datajson.chartOrdersValue,
+							datajson.gaTransactions
 						],
+						names: {
+							data1: 'Rank VTEX',
+							data2: 'Pedido',
+							data3: 'Pedidos GA',
+						},
 						types: {
-							'Rank VTEX': 'area-spline',
-							'Pedidos': 'area-spline',
-							'Pedidos GA': 'area-spline'
+							data1: 'area-spline',
+							data2:'area-spline',
+							data3: 'area-spline'
 						},
 						colors: {
-							'Rank VTEX': '#4285f4',
-							'Pedidos': '#177943',
-							'Pedidos GA': '#771776'
+							data1: Common._QD_color.vtex_ranks,
+							data2: Common._QD_color.vtex_pedidos,
+							data3: Common._QD_color.ga_pedidos
 						},
-						labels: {
-				            format: {
-				                'Rank VTEX': d3.format(''),
-				                'Pedidos': d3.format(''),
-				                'Pedidos GA': d3.format('')
-				            }
-				        }
+						labels: true
 					},
 					grid: {
 						x: {show: true },
@@ -368,6 +370,59 @@ try {
 			});
 		},
 		ordersByMonthChart: function() {
+			Common.ordersByMonthRequest().done(function(datajson) {
+				datajson.chartOrdersLabel.unshift('x');
+				datajson.chartOrdersPosition.unshift('data1');
+				datajson.chartOrdersValue.unshift('data2');
+				datajson.gaTransactions.unshift('data3');
+				datajson.chartOrdersValueInvoiced.unshift('data4');
+
+				var chartCombination = c3.generate({
+					bindto:'#orders-by-month',
+					data: {
+						x: 'x',
+						columns: [
+							datajson.chartOrdersLabel,
+							datajson.chartOrdersPosition,
+							datajson.chartOrdersValue,
+							datajson.gaTransactions,
+							datajson.chartOrdersValueInvoiced
+						],
+						names: {
+							data1:'Rank VTEX',
+							data2:'Pedidos',
+							data3:'Pedidos GA',
+							data4:'Pedidos Faturados'
+						},
+						type: 'bar',
+						types: {
+							data1: 'area-spline'
+						},
+						colors: {
+							data1: Common._QD_color.vtex_ranks,
+							data2: Common._QD_color.vtex_pedidos,
+							data3: Common._QD_color.ga_pedidos,
+							data4: Common._QD_color.vtex_pedidos_invoiced
+						},
+						labels:true
+					},
+					axis: {
+						x: {
+							type: 'categorized',
+							tick: {
+								rotate: 90,
+								multiline: false
+							},
+						}
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					}
+				});
+			});
+		},
+		ordersByMonthRequest: function() {
 			function padLeft(value, length) {
 			    return (value.toString().length < length)? padLeft("0" + value, length): value;
 			}
@@ -379,7 +434,10 @@ try {
     		var dateEndObject = new Date();
     		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
 
-			$.ajax({
+    		if(Common.ordersByMonthRequestjqXHR)
+    			return Common.ordersByMonthRequestjqXHR;
+
+			Common.ordersByMonthRequestjqXHR = $.ajax({
 				headers: Common._QD_ajax_headers,
 				url: Common._QD_restful_report_url + "/pvt/report/orders-by-month",
 				dataType: "json",
@@ -388,117 +446,42 @@ try {
 					dateStart: dateStart,
 					dateEnd: dateEnd
 				}
-			}).done(function(datajson) {
-				var days = 		  	  ['x'];
-				var ranks = 		  ['Rank VTEX'];
-				var orders = 		  ['Pedidos'];
-				var googleAnalytics = ['Pedidos GA'];
-
-				for(var i in datajson.chartOrdersLabel) {
-					days[days.length] = datajson.chartOrdersLabel[i];
-					ranks[ranks.length] = parseInt(datajson.chartOrdersPosition[i]);
-					orders[orders.length] = parseInt(datajson.chartOrdersValue[i]);
-					googleAnalytics[googleAnalytics.length] = parseInt(datajson.gaTransactions[i]);
-				}
-
-				var chartCombination = c3.generate({
-					bindto:'#orders-by-month',
-				    data: {
-				    	x: 'x',
-				        columns: [
-				            days,
-							ranks,
-							orders,
-							googleAnalytics
-				        ],
-				        type: 'bar',
-				        types: {
-				            'Rank VTEX': 'area-spline',
-				        },
-				        colors: {
-							'Rank VTEX': '#4285f4',
-							'Pedidos': '#177943',
-							'Pedidos GA': '#771776'
-						},
-						labels: {
-				            format: {
-				                'Rank VTEX': d3.format(''),
-				                'Pedidos': d3.format(''),
-				                'Pedidos GA': d3.format('')
-				            }
-				        }
-				    },
-				    axis: {
-				        x: {
-				            type: 'categorized',
-				            tick: {
-				                rotate: 90,
-				                multiline: false
-				            },
-				        }
-				    },
-				    grid: {
-						x: {show: true },
-						y: {show: true }
-					}
-				});
-
 			});
+			return Common.ordersByMonthRequestjqXHR;
 		},
 		ordersValueByMonthChart: function() {
-			function padLeft(value, length) {
-			    return (value.toString().length < length)? padLeft("0" + value, length): value;
-			}
-
-			var dateStartObject = new Date();
-			dateStartObject.setDate(dateStartObject.getDate() - 365);
-    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
-
-    		var dateEndObject = new Date();
-    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
-
-			$.ajax({
-				headers: Common._QD_ajax_headers,
-				url: Common._QD_restful_report_url + "/pvt/report/orders-value-by-month",
-				dataType: "json",
-				data: {
-					store: Common._QD_query_string.store,
-					dateStart: dateStart,
-					dateEnd: dateEnd
-				}
-			}).done(function(datajson) {
-				var days = 		  	  ['x'];
-				var orders = 		  ['Pedidos'];
-				var googleAnalytics = ['Pedidos GA'];
-				var invoicedOrders = ['Pedidos Faturados'];
-
-				for(var i in datajson.chartOrdersLabel) {
-					days[days.length] = datajson.chartOrdersLabel[i];
-					orders[orders.length] = datajson.chartOrdersValue[i];
-					googleAnalytics[googleAnalytics.length] = datajson.gaTransactions[i];
-					invoicedOrders[invoicedOrders.length] = datajson.chartInvoicedOrdersValue[i];
-				}
+			Common.ordersValueByMonthChartRequest().done(function(datajson) {
+				datajson.chartOrdersLabel.unshift('x');
+				datajson.chartOrdersValue.unshift('data1');
+				datajson.gaTransactions.unshift('data2');
+				datajson.chartInvoicedOrdersValue.unshift('data3');
 
 				var chartLines = c3.generate({
 					bindto: '#orders-value-by-month',
 					data: {
 						x: 'x',
 						columns: [
-							days,
-							orders,
-							invoicedOrders,
-							googleAnalytics
+							datajson.chartOrdersLabel,
+							datajson.chartOrdersValue,
+							datajson.gaTransactions,
+							datajson.chartInvoicedOrdersValue
 						],
+						names: {
+							data1:'Pedidos',
+							data2:'Pedidos GA',
+							data3:'Pedidos Faturados'
+						},
 						type: 'bar',
-						// groups: [['Pedidos', 'Pedidos Faturados'] ],
 						colors: {
-							'Pedidos': '#177943',
-							'Pedidos GA': '#771776'
+							data1:Common._QD_color.vtex_pedidos,
+							data2:Common._QD_color.ga_pedidos,
+							data3:Common._QD_color.vtex_pedidos_invoiced
 						},
 						labels: {
 				            format: {
-				                'Pedidos': Tools.chartMonetaryFormatRounded,
-				                'Pedidos GA': Tools.chartMonetaryFormatRounded
+				                data1: Tools.chartMonetaryFormatRounded,
+				                data2: Tools.chartMonetaryFormatRounded,
+				                data3: Tools.chartMonetaryFormatRounded
 				            }
 				        }
 					},
@@ -526,10 +509,9 @@ try {
 						}
 					}	
 				});
-
 			});
 		},
-		ordersByMonthMarkXFulfillmentChart: function() {
+		ordersValueByMonthChartRequest: function() {
 			function padLeft(value, length) {
 			    return (value.toString().length < length)? padLeft("0" + value, length): value;
 			}
@@ -541,43 +523,47 @@ try {
     		var dateEndObject = new Date();
     		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
 
-			$.ajax({
+    		if(Common.ordersValueByMonthChartXHR)
+    			return Common.ordersValueByMonthChartXHR;
+
+			Common.ordersValueByMonthChartXHR = $.ajax({
 				headers: Common._QD_ajax_headers,
-				url: Common._QD_restful_report_url + "/pvt/report/orders-by-month-mark-x-fulfillment",
+				url: Common._QD_restful_report_url + "/pvt/report/orders-value-by-month",
 				dataType: "json",
 				data: {
 					store: Common._QD_query_string.store,
 					dateStart: dateStart,
 					dateEnd: dateEnd
 				}
-			}).done(function(datajson) {
-				var days = 		   ['x'];
-				var marketplace =  ['Loja'];
-				var fulfillment =  ['Marketplace'];
-				var total = 	   ['Total'];
-
-				for(var i in datajson.chartOrdersLabel) {
-					days[days.length] = datajson.chartOrdersLabel[i];
-					marketplace[marketplace.length] =  datajson.chartOrdersValueMarketplace[i];
-					fulfillment[fulfillment.length] =  datajson.chartOrdersValueFulfillment[i];
-					total[total.length] = 	   datajson.chartOrdersValue[i];
-				}
+			});
+			return Common.ordersValueByMonthChartXHR;
+		},
+		ordersByMonthMarkXFulfillmentChart: function() {
+			Common.ordersValueByMonthChartRequest().done(function(datajson) {
+				datajson.chartOrdersValueMarketplace.unshift('data1');
+				datajson.chartOrdersValueFulfillment.unshift('data2');
+				datajson.chartOrdersValue.unshift('data3');
 
 				var chartLines = c3.generate({
 					bindto: '#orders-by-month-mark-x-fulfillment',
 					data: {
 						x: 'x',
 						columns: [
-							days,
-							total,
-							marketplace,
-							fulfillment
+							datajson.chartOrdersLabel,
+							datajson.chartOrdersValueMarketplace,
+							datajson.chartOrdersValueFulfillment,
+							datajson.chartOrdersValue
 						],
+						names: {
+							data1:'Loja',
+							data2:'Marketplace',
+							data3:'Total'
+						},
 						type: 'bar',
 						colors: {
-							'Marketplace':  '#4285f4',
-							'Loja':  		'#177943',
-							'Total': 		'#771776'
+							data1:Common._QD_color.vtex_orders_marktplace,
+							data2:Common._QD_color.vtex_orders_fulfillment,
+							data3:Common._QD_color.vtex_orders
 						},
 						labels: {
 				            format: {
@@ -609,6 +595,60 @@ try {
 				    	format: {
 				    		value: Tools.chartMonetaryFormat
 						}
+					}	
+				});
+
+			});
+		},
+		ordersByMonthPaymentType: function() {
+			Common.ordersByMonthRequest().done(function(datajson) {
+				columns= [];
+				for(var i in datajson.chartOrdersValuePaymentsType) {
+					columns.push(new Array(i));
+				} 
+				
+				for(var i in datajson.chartOrdersValueByPaymentType) {
+					var index = 0;
+					for(var j in datajson.chartOrdersValuePaymentsType) {
+						var data = datajson.chartOrdersValueByPaymentType[i][j];
+						if (data != undefined && data != null) 
+							columns[index].push(data);	
+						else
+							columns[index].push(0);	
+						index++;
+					} 
+				}
+				
+				columns.unshift(datajson.chartOrdersLabel);
+
+				var chartLines = c3.generate({
+					bindto: '#orders-value-by-month-payment-type',
+					data: {
+						x: 'x',
+						columns:columns ,
+						type: 'area-spline',
+						labels: false
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	
 					}	
 				});
 
