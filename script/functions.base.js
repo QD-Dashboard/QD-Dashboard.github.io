@@ -60,6 +60,7 @@ try {
 					Common.ordersByMonthChart();
 					Common.ordersValueByMonthChart();
 					Common.ordersByMonthMarkXFulfillmentChart();
+					Common.ordersByDayPaymentType();
 					Common.ordersByMonthPaymentType();
 				}
 			}
@@ -299,27 +300,7 @@ try {
 			return true;
 		},
 		ordersByDayChart: function() {
-			function padLeft(value, length) {
-			    return (value.toString().length < length)? padLeft("0" + value, length): value;
-			}
-
-			var dateStartObject = new Date();
-			dateStartObject.setDate(dateStartObject.getDate() - 30);
-    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
-
-    		var dateEndObject = new Date();
-    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
-
-			$.ajax({
-				headers: Common._QD_ajax_headers,
-				url: Common._QD_restful_report_url + "/pvt/report/orders-by-day",
-				dataType: "json",
-				data: {
-					store: Common._QD_query_string.store,
-					dateStart: dateStart,
-					dateEnd: dateEnd
-				}
-			}).done(function(datajson) {
+			Common.ordersByDayRequest().done(function(datajson) {
 				datajson.chartOrdersLabel.unshift('x');
 				datajson.chartOrdersPosition.unshift('data1')
 				datajson.chartOrdersValue.unshift('data2')
@@ -421,6 +402,33 @@ try {
 					}
 				});
 			});
+		},
+		ordersByDayRequest: function() {
+			function padLeft(value, length) {
+			    return (value.toString().length < length)? padLeft("0" + value, length): value;
+			}
+
+			var dateStartObject = new Date();
+			dateStartObject.setDate(dateStartObject.getDate() - 30);
+    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
+
+    		var dateEndObject = new Date();
+    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
+
+    		if(Common.ordersByDayRequestXHR)
+    			return Common.ordersByDayRequestXHR;
+
+			Common.ordersByDayRequestXHR = $.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_report_url + "/pvt/report/orders-by-day",
+				dataType: "json",
+				data: {
+					store: Common._QD_query_string.store,
+					dateStart: dateStart,
+					dateEnd: dateEnd
+				}
+			});
+			return Common.ordersByDayRequestXHR;
 		},
 		ordersByMonthRequest: function() {
 			function padLeft(value, length) {
@@ -600,6 +608,60 @@ try {
 
 			});
 		},
+		ordersByDayPaymentType: function() {
+			Common.ordersByDayRequest().done(function(datajson) {
+				columns= [];
+				for(var i in datajson.chartOrdersValuePaymentsType) {
+					columns.push(new Array(i));
+				} 
+				
+				for(var i in datajson.chartOrdersValueByPaymentType) {
+					var index = 0;
+					for(var j in datajson.chartOrdersValuePaymentsType) {
+						var data = datajson.chartOrdersValueByPaymentType[i][j];
+						if (data != undefined && data != null) 
+							columns[index].push(data);	
+						else
+							columns[index].push(0);	
+						index++;
+					} 
+				}
+				
+				columns.unshift(datajson.chartOrdersLabel);
+
+				var chartLines = c3.generate({
+					bindto: '#orders-by-day-payment-type',
+					data: {
+						x: 'x',
+						columns:columns ,
+						type: 'area-spline',
+						labels: false
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	
+					}	
+				});
+
+			});
+		},
 		ordersByMonthPaymentType: function() {
 			Common.ordersByMonthRequest().done(function(datajson) {
 				columns= [];
@@ -622,7 +684,7 @@ try {
 				columns.unshift(datajson.chartOrdersLabel);
 
 				var chartLines = c3.generate({
-					bindto: '#orders-value-by-month-payment-type',
+					bindto: '#orders-by-month-payment-type',
 					data: {
 						x: 'x',
 						columns:columns ,
