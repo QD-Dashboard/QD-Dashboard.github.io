@@ -126,7 +126,7 @@ try {
 				success: function(data) {				
 					var win = window.open(data.link, "qd_login_ga", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
 					var timer = setInterval(function() {
-						if(win.closed) {
+						if(win && win.closed) { 
 							clearInterval(timer);
 							if (win.google_client_token && win.google_client_token.indexOf('false') < 0)
 								Common.googleAnalyticsConf(win.google_client_token , modal);
