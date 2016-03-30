@@ -70,11 +70,9 @@ try {
 		loading: function() {
 			$(document).ajaxStart(function() {
 				$('.qd-loading').show();
-				$(document.body).addClass('qd-loading-full').addClass('modal-open');
 			});
 			$(document).ajaxStop(function() {
 				$('.qd-loading').hide();
-				$(document.body).removeClass('qd-loading-full').removeClass('modal-open');
 			});
 		},
 		qdLinkSettings: function() {
@@ -100,54 +98,128 @@ try {
 				},
 				dataType:'json',
 				success: function(data) {
+					$(document.body).removeClass('qd-ga-loading');
 					if (data.success) {
 						if (data.profileIdConfigured)
 							modal.find('p').html('Você esta conectado como: <span class="qd-ga-status bg-info"> ' + data.accountName + ' &raquo; ' + data.propertyName + ' (' + data.propertyId + ') &raquo; ' + data.profileName + ' </span>');
-						else
-							$('<button class="qd-link-to-ga btn btn-primary">Vincular o GA com ' + Common._QD_query_string.store + '</button>')
-							.appendTo(modal.find('p').empty()).after('<img class="qd-loading-local" src="img/ajax-loader.gif" />')
-							.click(function(){
-								var b = $(this);
-								b.attr('disabled',true);
-								Common.googleAnalyticsLoadProfiles(function(){
-									b.attr('disabled',false);
-								});
+						$('<button class="qd-link-to-ga btn btn-primary" style="display: block;">Vincular o GA com ' + Common._QD_query_string.store + '</button>')
+							.appendTo( data.profileIdConfigured ? modal.find('p') : modal.find('p').empty()).click(function(){
+								$(document.body).addClass('qd-ga-loading');
+								Common.googleAnalyticsLoadProfiles(modal);
 							});
+							
 					}
 					else {
-						$('<button class="qd-connect-to-ga btn btn-primary">Conectar com Google Analytics</button>').appendTo(modal.find('p').empty()).click(Common.googleAnalyticsLogin);
+						$('<button class="qd-connect-to-ga btn btn-primary">Conectar com Google Analytics</button>').appendTo(modal.find('p').empty()).click(function(){
+							Common.googleAnalyticsLogin(modal);
+						});
 					}						
 				}
 			});
 		},
-		googleAnalyticsConf: function(google_client_token) {
-			$.ajax({
-				type: 'POST',
-				headers: Common._QD_ajax_headers,
-				url: Common._QD_restful_url + '/pvt/analytics/set-google-client-token.html',
-				data: { google_client_token: google_client_token },
-				success: Common.googleAnalyticsLoadProfiles
-			});
-		},
-		googleAnalyticsLogin: function() {
-			$.ajax({
-				headers: Common._QD_ajax_headers,
-				url: Common._QD_restful_url + '/pvt/analytics/login.html',
-				success: function(data) {
-					if (data.success)
-						return Common.googleAnalyticsLoadProfiles();
 
+		googleAnalyticsLogin: function(modal) {
+			$(document.body).addClass('qd-ga-loading');
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_url + '/pvt/analytics/login',
+				success: function(data) {				
 					var win = window.open(data.link, "qd_login_ga", "width=600, height=480, resizable=0, scrollbars=0, status=0, toolbar=0");
 					var timer = setInterval(function() {
 						if(win.closed) {
 							clearInterval(timer);
 							if (win.google_client_token && win.google_client_token.indexOf('false') < 0)
-								Common.googleAnalyticsConf(win.google_client_token);
+								Common.googleAnalyticsConf(win.google_client_token , modal);
+							else 
+								Common.getGaConnectionInfo(modal); 
+							
 						}
 					}, 200);
 				}
 			});
 		},
+
+		googleAnalyticsLoadProfiles: function(modal) {
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_url + '/pvt/analytics/profiles',
+				success: function(data) {
+					$(document.body).removeClass('qd-ga-loading');
+					var html = '<ol>';
+					var account;
+					var property;
+					var profile;
+
+					for(var i in data.accounts) {
+						account = data.accounts[i];
+						html += '<li>';
+						html += '<span><strong>Conta: </strong>' + account.name + '</span>';
+						html += '<ol type="I">';
+
+						for(var j in account.properties) {
+							property = account.properties[j];
+							html += '<li>';
+							html += '<span><strong>Propriedade: </strong>' + property.name + '</span>';
+							html += '<ol type="a">';
+
+							for(var k in property.profiles) {
+								profile = property.profiles[k];
+								html += '<li>';
+								html += '<span><strong>Visualização: </strong><a class="profile_id" href="' + profile.id + '">' + profile.name + '</a></span>';
+								html += '</li>';
+							}
+
+							html += '</ol>';
+							html += '</li>';
+						}
+
+						html += '</ol>';
+						html += '</li>';
+					}
+
+					html += '</ol>';
+					html = $(html);
+
+					html.appendTo(modal.find('p').empty());
+
+					html.find('a').on('click', function(){
+						$(document.body).addClass('qd-ga-loading');
+						$.ajax({
+							type: 'POST',
+							headers: Common._QD_ajax_headers,
+							url: Common._QD_restful_url + '/pvt/analytics/set-profiles',
+							data: {
+								google_client_profile_id: $(this).attr('href'),
+								store_account:Common._QD_query_string.store
+							},
+							success: function(data) {
+								if (data.success) {
+									window.location.reload();
+								} else 
+									Common.getGaConnectionInfo();
+							}
+						});
+						return false;
+					});
+				},
+				error: function(data){
+				
+				}
+			});
+		},
+
+		googleAnalyticsConf: function(google_client_token , modal) {
+			$.ajax({
+				type: 'POST',
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_url + '/pvt/analytics/set-google-client-token',
+				data: { google_client_token: google_client_token },
+				success: function() {
+					Common.getGaConnectionInfo(modal); 
+				}
+			});
+		}, 
+		
 		googleAnalyticsSaveToken: function() {
 			if (Common._QD_query_string.google_client_token === "false") {
 				var modal = Common.preparingModal({
@@ -180,96 +252,7 @@ try {
 				});
 			}
 		},
-		googleAnalyticsLoadProfiles: function(callbackOnClose) {
-			if (Common._QD_stores) {
-				var store;
-				for(var i in Common._QD_stores) {
-					store = Common._QD_stores[i];
-
-					if (store.account == Common._QD_query_string.store && store.ga_profile_id > 0)
-						return;
-				}
-			}
-
-			$.ajax({
-				headers: Common._QD_ajax_headers,
-				url: Common._QD_restful_url + '/pvt/analytics/profiles.html',
-				success: function(data) {
-					var html = '<ol>';
-					var account;
-					var property;
-					var profile;
-
-					for(var i in data.accounts) {
-						account = data.accounts[i];
-						html += '<li>';
-						html += '<span><strong>Conta: </strong>' + account.name + '</span>';
-						html += '<ol type="I">';
-
-						for(var j in account.properties) {
-							property = account.properties[j];
-							html += '<li>';
-							html += '<span><strong>Propriedade: </strong>' + property.name + '</span>';
-							html += '<ol type="a">';
-
-							for(var k in property.profiles) {
-								profile = property.profiles[k];
-								html += '<li>';
-								html += '<span><strong>Visualizaçã: </strong><a class="profile_id" href="' + profile.id + '">' + profile.name + '</a></span>';
-								html += '</li>';
-							}
-
-							html += '</ol>';
-							html += '</li>';
-						}
-
-						html += '</ol>';
-						html += '</li>';
-					}
-
-					html += '</ol>';
-					html = $(html);
-
-					var modal = Common.preparingModal({
-						closeButton: true,
-						title: 'Selecione um profile',
-						body: html
-					});
-
-					html.find('a').on('click', function(){
-						$.ajax({
-							type: 'POST',
-							headers: Common._QD_ajax_headers,
-							url: Common._QD_restful_url + '/pvt/analytics/set-profiles.html',
-							data: {
-								google_client_profile_id: $(this).attr('href'),
-								store_account:Common._QD_query_string.store
-							},
-							success: function(data) {
-								if (data.success) {
-									modal.modal('hide');
-									window.location.reload();
-								}
-							}
-						});
-						return false;
-					});
-					
-					if (callbackOnClose) {
-						modal.on('hide.bs.modal', function(){
-							callbackOnClose();
-						});	
-					}
-					
-					modal.find('.btn-validate-token').on('click', function(){
-						modal.modal('hide');
-					});
-				},
-				error: function(data){
-				
-				}
-			});
-		},
+		
 		checkAuthentication: function() {
 			$(document).ajaxComplete(function(event, XMLHttpRequest, ajaxOptions) {
 				if(XMLHttpRequest.status != 401)
