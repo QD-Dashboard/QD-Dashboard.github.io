@@ -19,6 +19,8 @@
 		.c3 svg{font:12px sans-serif}
 		.qd-modal-loading {display: none;}
 		.qd-ga-loading .qd-modal-loading {display: block; width: 100%; position: absolute; background: rgba(252, 248, 227,0.7); color: #8a6d3b; top: 0; left: 0; bottom: 0; margin-top: 56px; border-radius: 0px 0px 4px 4px; text-align: center; line-height: 100px; } 
+		.odd {background-color: #f1f1f1;}
+		.odd svg {background-color: #f1f1f1;}
 	</style>
 
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -75,24 +77,70 @@
 		<div class="container-fluid">
 			<div class="row">
 				<div class="col-xs-12">
-					<h3>Dashboard</h3>
+					<h2>Relatório por dia</h2>
 				</div>
 			</div>
 
-			<div class="row">
+			<div class="row odd">
 				<div class="col-xs-12">
 					<h4>Quantidade de pedidos por dia</h4>
 					<div class="chart-wrapper">
-						<div id="orders-by-day"></div>
+						<div id="orders-qtt-by-day"></div>
 					</div>
 				</div>
 			</div>
 
 			<div class="row">
 				<div class="col-xs-12">
-					<h4>Pedidos por dia por forma de pagamento</h4>
+					<h4>Valor dos pedidos por dia</h4>
 					<div class="chart-wrapper">
-						<div id="orders-by-day-payment-type"></div>
+						<div id="orders-value-by-day"></div>
+					</div>
+				</div>
+			</div>
+		
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos por dia por forma de pagamento</h4>
+					<div class="chart-wrapper">
+						<div id="orders-qtt-by-day-payment-type"></div>
+					</div>
+				</div>
+			</div>
+
+			
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos faturados por dia</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-qtt-by-day"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Valor dos pedidos faturados por dia</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-value-by-day"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos faturados por dia por forma de pagamento</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-by-day-payment-type"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos completos X incompletos por dia</h4>
+					<div class="chart-wrapper">
+						<div id="orders-incomplete-by-day"></div>
 					</div>
 				</div>
 			</div>
@@ -101,41 +149,73 @@
 
 			<div class="row">
 				<div class="col-xs-12">
-					<h4>Número de pedidos na loja por mês</h4>
+					<h2>Relatório por mês</h2>
+				</div>
+			</div>
+
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos por mês</h4>
 					<div class="chart-wrapper">
-						<div id="orders-by-month"></div>
+						<div id="orders-qtt-by-month"></div>
 					</div>
 				</div>
 			</div>
 
 			<div class="row">
 				<div class="col-xs-12">
-					<h4>Pedidos por mês por forma de pagamento</h4>
-					<div class="chart-wrapper">
-						<div id="orders-by-month-payment-type"></div>
-					</div>
-				</div>
-			</div>
-
-			<hr>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Valor de pedidos por mês</h4>
+					<h4>Valor dos pedidos por mês</h4>
 					<div class="chart-wrapper">
 						<div id="orders-value-by-month"></div>
 					</div>
 				</div>
 			</div>
 
-			<div class="row">
+			<div class="row odd">
 				<div class="col-xs-12">
-					<h4>Valor de pedidos por mês (Marktplace x Loja)</h4>
+					<h4>Quantidade de pedidos por mês por forma de pagamento</h4>
 					<div class="chart-wrapper">
-						<div id="orders-by-month-mark-x-fulfillment"></div> 
+						<div id="orders-qtt-by-month-payment-type"></div>
 					</div>
 				</div>
 			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos faturados por mês</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-qtt-by-month"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Valor dos pedidos faturados por mês</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-value-by-month"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos faturados por mês por forma de pagamento</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-by-month-payment-type"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row odd'">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos completos X incompletos por mês</h4>
+					<div class="chart-wrapper">
+						<div id="orders-incomplete-by-month"></div>
+					</div>
+				</div>
+			</div>
+
 		</div>
 	</div>
 

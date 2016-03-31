@@ -56,12 +56,48 @@ try {
 
 				if(Common._QD_query_string.store){
 					Common.qdLinkSettings();
-					Common.ordersByDayChart();
-					Common.ordersByMonthChart();
-					Common.ordersValueByMonthChart();
-					Common.ordersByMonthMarkXFulfillmentChart();
-					Common.ordersByDayPaymentType();
-					Common.ordersByMonthPaymentType();
+					
+					// Quantidade de pedidos por dia
+					Common.ordersQttChart(true);
+
+					// Quantidade de pedidos por mês
+					Common.ordersQttChart(false);
+
+					// Valor dos pedidos por dia
+					Common.ordersValueChart(true); 
+
+					// Valor dos pedidos por mês
+					Common.ordersValueChart(false); 
+
+					// Quantidade de pedidos por dia por forma de pagamento
+					Common.ordersQttPaymentTypeChart(true);
+
+					// Quantidade de pedidos por mês por forma de pagamento
+					Common.ordersQttPaymentTypeChart(false);
+
+					// Quantidade de pedidos faturados por dia
+					Common.ordersInvoicedQttChart(true);
+
+					// Quantidade de pedidos faturados por mês
+					Common.ordersInvoicedQttChart(false);
+
+					// Valor dos pedidos faturados por dia
+					Common.ordersInvoicedValueChart(true);
+
+					// Valor dos pedidos faturados por mês
+					Common.ordersInvoicedValueChart(false);
+
+					// Quantidade de pedidos faturados por dia por forma de pagamento
+					Common.ordersInvoicedPaymentTypeChart(true);
+					
+					// Quantidade de pedidos faturados por mês por forma de pagamento
+					Common.ordersInvoicedPaymentTypeChart(false);
+
+					// Quantidade de pedidos completos X incompletos por dia
+					Common.ordersIncompleteQttChart(true);
+
+					// Quantidade de pedidos completos X incompletos por mês
+					Common.ordersIncompleteQttChart(false);
 				}
 			}
 		},
@@ -281,6 +317,7 @@ try {
 			Common._QD_ajax_headers = {'x-qd-auth': token };
 			return true;
 		},
+		// Request por dia
 		ordersByDayRequest: function() {
 			function padLeft(value, length) {
 			    return (value.toString().length < length)? padLeft("0" + value, length): value;
@@ -308,107 +345,7 @@ try {
 			});
 			return Common.ordersByDayRequestXHR;
 		},
-		ordersByDayChart: function() {
-			Common.ordersByDayRequest().done(function(datajson) {
-				datajson.chartOrdersLabel.unshift('x');
-				datajson.chartOrdersQtt.unshift('data1');
-				datajson.chartOrdersQtt.unshift('data2');
-				datajson.chartOrdersQtt.unshift('data3');
-				datajson.gaOrdersQtt.unshift('data4');
-				datajson.chartOrdersPosition.unshift('data5');
-
-				var chartLines = c3.generate({
-					bindto: '#orders-by-day',
-					data: {
-						x: 'x',
-						columns: [
-							datajson.chartOrdersLabel,
-							datajson.chartOrdersQtt,
-							datajson.chartOrdersQtt,
-							datajson.chartOrdersQtt,
-							datajson.gaOrdersQtt,
-							datajson.chartOrdersPosition
-						],
-						names: {
-							data1: 'Todos os Pedidos',
-							data2: 'Pedidos Marketplace',
-							data3: 'Pedidos Loja',
-							data4: 'Pedidos GA',
-							data5: 'Rank',
-						},
-						types: 'area',
-						labels: true
-					},
-					grid: {
-						x: {show: true },
-						y: {show: true }
-					},
-					axis: {
-				        x: {
-				            type: 'categorized',
-				            tick: {
-				                rotate: 90,
-				                multiline: false
-				            },
-				        }
-				    }
-				});
-
-			});
-		},
-		ordersByMonthChart: function() {
-			Common.ordersByMonthRequest().done(function(datajson) {
-				datajson.chartOrdersLabel.unshift('x');
-				datajson.chartOrdersPosition.unshift('data1');
-				datajson.chartOrdersQtt.unshift('data2');
-				datajson.gaOrdersQtt.unshift('data3');
-				datajson.chartOrdersInvoicedQtt.unshift('data4');
-
-				var chartCombination = c3.generate({
-					bindto:'#orders-by-month',
-					data: {
-						x: 'x',
-						columns: [
-							datajson.chartOrdersLabel,
-							datajson.chartOrdersPosition,
-							datajson.chartOrdersQtt,
-							datajson.gaOrdersQtt,
-							datajson.chartOrdersInvoicedQtt
-						],
-						names: {
-							data1:'Rank VTEX',
-							data2:'Pedidos',
-							data3:'Pedidos GA',
-							data4:'Pedidos Faturados'
-						},
-						type: 'bar',
-						types: {
-							data1: 'area'
-						},
-						colors: {
-							data1: Common._QD_color.vtex_ranks,
-							data2: Common._QD_color.vtex_pedidos,
-							data3: Common._QD_color.ga_pedidos,
-							data4: Common._QD_color.vtex_pedidos_invoiced
-						},
-						labels:true
-					},
-					axis: {
-						x: {
-							type: 'categorized',
-							tick: {
-								rotate: 90,
-								multiline: false
-							},
-						}
-					},
-					grid: {
-						x: {show: true },
-						y: {show: true }
-					}
-				});
-			});
-		},
+		// Request por mês
 		ordersByMonthRequest: function() {
 			function padLeft(value, length) {
 			    return (value.toString().length < length)? padLeft("0" + value, length): value;
@@ -436,61 +373,231 @@ try {
 			});
 			return Common.ordersByMonthRequestjqXHR;
 		},
-		/*ordersValueByMonthChartRequest: function() {
-			function padLeft(value, length) {
-			    return (value.toString().length < length)? padLeft("0" + value, length): value;
-			}
-
-			var dateStartObject = new Date();
-			dateStartObject.setDate(dateStartObject.getDate() - 365);
-    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-' + padLeft(dateStartObject.getDate(), 2);
-
-    		var dateEndObject = new Date();
-    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
-
-    		if(Common.ordersValueByMonthChartXHR)
-    			return Common.ordersValueByMonthChartXHR;
-
-			Common.ordersValueByMonthChartXHR = $.ajax({
-				headers: Common._QD_ajax_headers,
-				url: Common._QD_restful_report_url + "/pvt/report/orders-value-by-month",
-				dataType: "json",
-				data: {
-					store: Common._QD_query_string.store,
-					dateStart: dateStart,
-					dateEnd: dateEnd
-				}
-			});
-			return Common.ordersValueByMonthChartXHR;
-		},*/
-		ordersValueByMonthChart: function() {
-			Common.ordersByMonthRequest().done(function(datajson) {
+		ordersQttChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
 				datajson.chartOrdersLabel.unshift('x');
-				datajson.chartOrdersValue.unshift('data1');
-				datajson.gaOrdersValue.unshift('data2');
-				datajson.chartInvoicedOrdersValue.unshift('data3');
+				datajson.chartOrdersQtt.unshift('data1');
+				datajson.chartOrdersQttFulfillment.unshift('data2');
+				datajson.chartOrdersQttMarketplace.unshift('data3');
+				datajson.gaOrdersQtt.unshift('data4');
+				datajson.chartOrdersPosition.unshift('data5');
 
 				var chartLines = c3.generate({
-					bindto: '#orders-value-by-month',
+					bindto: (day ? '#orders-qtt-by-day' : '#orders-qtt-by-month'),
+					data: {
+						x: 'x',
+						columns: [
+							datajson.chartOrdersLabel,
+							datajson.chartOrdersQtt,
+							datajson.chartOrdersQttFulfillment,
+							datajson.chartOrdersQttMarketplace,
+							datajson.gaOrdersQtt,
+							datajson.chartOrdersPosition
+						],
+						names: {
+							data1: 'Todos os Pedidos',
+							data2: 'Pedidos Marketplace',
+							data3: 'Pedidos Loja',
+							data4: 'Pedidos GA',
+							data5: 'Rank',
+						},
+						type: 'area',
+						labels: true
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    }
+				});
+
+			});
+		},
+		ordersValueChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				datajson.chartOrdersValue.unshift('data1');
+				datajson.chartOrdersValueFulfillment.unshift('data2');
+				datajson.chartOrdersValueMarketplace.unshift('data3');
+				datajson.gaOrdersValue.unshift('data4');
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-value-by-day' : '#orders-value-by-month'),
 					data: {
 						x: 'x',
 						columns: [
 							datajson.chartOrdersLabel,
 							datajson.chartOrdersValue,
-							datajson.gaOrdersValue,
-							datajson.chartInvoicedOrdersValue
+							datajson.chartOrdersValueFulfillment,
+							datajson.chartOrdersValueMarketplace,
+							datajson.gaOrdersValue
 						],
 						names: {
-							data1:'Pedidos',
-							data2:'Pedidos GA',
-							data3:'Pedidos Faturados'
+							data1: 'Todos os Pedidos',
+							data2: 'Pedidos Marketplace',
+							data3: 'Pedidos Loja',
+							data4: 'Pedidos GA',
 						},
-						type: 'bar',
-						colors: {
-							data1:Common._QD_color.vtex_pedidos,
-							data2:Common._QD_color.ga_pedidos,
-							data3:Common._QD_color.vtex_pedidos_invoiced
+						type: 'area',
+						labels: {
+				            format: {
+				                data1: Tools.chartMonetaryFormatRounded,
+				                data2: Tools.chartMonetaryFormatRounded,
+				                data3: Tools.chartMonetaryFormatRounded,
+				                data4: Tools.chartMonetaryFormatRounded
+				            }
+				        }
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    }
+				});
+
+			});
+		},
+		ordersQttPaymentTypeChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				columns= [];
+				for(var i in datajson.chartOrdersValuePaymentsType) {
+					columns.push(new Array(i));
+				} 
+				columns.push(new Array('Marketplace'));
+				
+				var index = 0;
+				for(var i in datajson.chartOrdersValueByPaymentType) {
+					index = 0;
+					for(var j in datajson.chartOrdersValuePaymentsType) {
+						var data = datajson.chartOrdersValueByPaymentType[i][j];
+						if (data != undefined && data != null) 
+							columns[index].push(data);	
+						else
+							columns[index].push(0);	
+						index++;
+					} 
+				}
+
+				for(var j in datajson.chartOrdersQttFulfillment) {
+					columns[index].push( datajson.chartOrdersQttFulfillment[j]);
+				}
+				
+				columns.unshift(datajson.chartOrdersLabel);
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-qtt-by-day-payment-type' : '#orders-qtt-by-month-payment-type'),
+					data: {
+						x: 'x',
+						columns:columns ,
+						type: 'area',
+						labels: false
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	
+					}	
+				});
+
+			});
+		},
+		ordersInvoicedQttChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				datajson.chartOrdersInvoicedQtt.unshift('data1');
+				datajson.chartOrdersInvoicedQttFulfillment.unshift('data2');
+				datajson.chartOrdersInvoicedQttMarketplace.unshift('data3');
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-invoiced-qtt-by-day' : '#orders-invoiced-qtt-by-month'),
+					data: {
+						x: 'x',
+						columns: [
+							datajson.chartOrdersLabel,
+							datajson.chartOrdersInvoicedQtt,
+							datajson.chartOrdersInvoicedQttFulfillment,
+							datajson.chartOrdersInvoicedQttMarketplace,
+						],
+						names: {
+							data1: 'Todos os Pedidos',
+							data2: 'Pedidos Marketplace',
+							data3: 'Pedidos Loja',
+							data4: 'Pedidos GA',
+							data5: 'Rank',
 						},
+						type: 'area',
+						labels: true
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    }
+				});
+
+			});
+		},
+		ordersInvoicedValueChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				datajson.chartOrdersInvoicedValue.unshift('data1');
+				datajson.chartOrdersInvoicedValueFulfillment.unshift('data2');
+				datajson.chartOrdersInvoicedValueMarketplace.unshift('data3');
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-invoiced-value-by-day' : '#orders-invoiced-value-by-month'),
+					data: {
+						x: 'x',
+						columns: [
+							datajson.chartOrdersLabel,
+							datajson.chartOrdersInvoicedValue,
+							datajson.chartOrdersInvoicedValueFulfillment,
+							datajson.chartOrdersInvoicedValueMarketplace,
+						],
+						names: {
+							data1: 'Todos os Pedidos',
+							data2: 'Pedidos Marketplace',
+							data3: 'Pedidos Loja',
+							data4: 'Pedidos GA',
+						},
+						type: 'area',
 						labels: {
 				            format: {
 				                data1: Tools.chartMonetaryFormatRounded,
@@ -503,6 +610,58 @@ try {
 						x: {show: true },
 						y: {show: true }
 					},
+					axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    }
+				});
+
+			});
+		},
+		ordersInvoicedPaymentTypeChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				columns= [];
+				for(var i in datajson.chartOrdersValuePaymentsType) {
+					columns.push(new Array(i));
+				} 
+				columns.push(new Array('Marketplace'));
+				
+				var index = 0;
+				for(var i in datajson.chartOrdersValueByPaymentType) {
+					index = 0;
+					for(var j in datajson.chartOrdersValuePaymentsType) {
+						var data = datajson.chartOrdersValueByPaymentType[i][j];
+						if (data != undefined && data != null) 
+							columns[index].push(data);	
+						else
+							columns[index].push(0);	
+						index++;
+					} 
+				}
+
+				for(var j in datajson.chartOrdersQttFulfillment) {
+					columns[index].push( datajson.chartOrdersQttFulfillment[j]);
+				}
+				
+				columns.unshift(datajson.chartOrdersLabel);
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-invoiced-by-day-payment-type' : '#orders-invoiced-by-month-payment-type'),
+					data: {
+						x: 'x',
+						columns:columns ,
+						type: 'area',
+						labels: false
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
 					axis: { 
 				        x: {
 				            type: 'categorized',
@@ -513,188 +672,55 @@ try {
 				        }, 
 				        y: {
 				        	tick: {
-				                format: Tools.chartMonetaryFormatRoundedWithoutDecimal
+				                
 				            }
 				        }
 				    },
 				    tooltip: {
-				    	format: {
-				    		value: Tools.chartMonetaryFormat
-						}
+				    	
 					}	
 				});
+
 			});
 		},
-		ordersByMonthMarkXFulfillmentChart: function() {
-			Common.ordersByMonthRequest().done(function(datajson) {
-				datajson.chartOrdersValueMarketplace.unshift('data1');
-				datajson.chartOrdersValueFulfillment.unshift('data2');
-				datajson.chartOrdersValue.unshift('data3');
+		ordersIncompleteQttChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				datajson.chartOrdersIncompleteQtt.unshift('data2');
 
 				var chartLines = c3.generate({
-					bindto: '#orders-by-month-mark-x-fulfillment',
+					bindto: (day ? '#orders-incomplete-by-day' : '#orders-incomplete-by-month'), 
 					data: {
 						x: 'x',
 						columns: [
 							datajson.chartOrdersLabel,
-							datajson.chartOrdersValueMarketplace,
-							datajson.chartOrdersValueFulfillment,
-							datajson.chartOrdersValue
+							datajson.chartOrdersQtt,
+							datajson.chartOrdersIncompleteQtt
 						],
 						names: {
-							data1:'Loja',
-							data2:'Marketplace',
-							data3:'Total'
+							data1: 'Todos os Pedidos',
+							data2: 'Pedidos Incompletos',
 						},
-						type: 'bar',
-						colors: {
-							data1:Common._QD_color.vtex_orders_marktplace,
-							data2:Common._QD_color.vtex_orders_fulfillment,
-							data3:Common._QD_color.vtex_orders
-						}, 
-						labels: {
-				            format: {
-				                data1: Tools.chartMonetaryFormatRounded,
-				                data2: Tools.chartMonetaryFormatRounded,
-				                data3: Tools.chartMonetaryFormatRounded,
-				            }
-				        }
-					},
-					grid: {
-						x: {show: true },
-						y: {show: true }
-					},
-					axis: { 
-				        x: {
-				            type: 'categorized',
-				            tick: {
-				                rotate: 90,
-				                multiline: false
-				            },
-				        }, 
-				        y: {
-				        	tick: {
-				                format: Tools.chartMonetaryFormatRoundedWithoutDecimal
-				            }
-				        }
-				    },
-				    tooltip: {
-				    	format: {
-				    		value: Tools.chartMonetaryFormat
-						}
-					}	
-				});
-
-			});
-		},
-		ordersByDayPaymentType: function() {
-			Common.ordersByDayRequest().done(function(datajson) {
-				columns= [];
-				for(var i in datajson.chartOrdersValuePaymentsType) {
-					columns.push(new Array(i));
-				} 
-				
-				for(var i in datajson.chartOrdersValueByPaymentType) {
-					var index = 0;
-					for(var j in datajson.chartOrdersValuePaymentsType) {
-						var data = datajson.chartOrdersValueByPaymentType[i][j];
-						if (data != undefined && data != null) 
-							columns[index].push(data);	
-						else
-							columns[index].push(0);	
-						index++;
-					} 
-				}
-				
-				columns.unshift(datajson.chartOrdersLabel);
-
-				var chartLines = c3.generate({
-					bindto: '#orders-by-day-payment-type',
-					data: {
-						x: 'x',
-						columns:columns ,
 						type: 'area',
-						labels: false
+						labels: true
 					},
 					grid: {
 						x: {show: true },
 						y: {show: true }
 					},
-					axis: { 
+					axis: {
 				        x: {
 				            type: 'categorized',
 				            tick: {
 				                rotate: 90,
 				                multiline: false
 				            },
-				        }, 
-				        y: {
-				        	tick: {
-				                
-				            }
 				        }
-				    },
-				    tooltip: {
-				    	
-					}	
+				    }
 				});
 
 			});
 		},
-		ordersByMonthPaymentType: function() {
-			Common.ordersByMonthRequest().done(function(datajson) {
-				columns= [];
-				for(var i in datajson.chartOrdersValuePaymentsType) {
-					columns.push(new Array(i));
-				} 
-				
-				for(var i in datajson.chartOrdersValueByPaymentType) {
-					var index = 0;
-					for(var j in datajson.chartOrdersValuePaymentsType) {
-						var data = datajson.chartOrdersValueByPaymentType[i][j];
-						if (data != undefined && data != null) 
-							columns[index].push(data);	
-						else
-							columns[index].push(0);	
-						index++;
-					} 
-				}
-				
-				columns.unshift(datajson.chartOrdersLabel);
-
-				var chartLines = c3.generate({
-					bindto: '#orders-by-month-payment-type',
-					data: {
-						x: 'x',
-						columns:columns ,
-						type: 'area',
-						labels: false
-					},
-					grid: {
-						x: {show: true },
-						y: {show: true }
-					},
-					axis: { 
-				        x: {
-				            type: 'categorized',
-				            tick: {
-				                rotate: 90,
-				                multiline: false
-				            },
-				        }, 
-				        y: {
-				        	tick: {
-				                
-				            }
-				        }
-				    },
-				    tooltip: {
-				    	
-					}	
-				});
-
-			});
-		},
+		
 		loginModal: function() {
 			var form = $('<form class="login"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">E-mail: </label> <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">Login</button> </form>');
 			var modal = Common.preparingModal({
