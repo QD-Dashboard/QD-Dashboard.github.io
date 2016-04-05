@@ -8,6 +8,7 @@
 	<title>Quatro Digital - Dashboard</title>
 
 	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 	<link rel="stylesheet" href="script/c3.min.css">
 
 	<style>
@@ -21,7 +22,12 @@
 		.qd-ga-loading .qd-modal-loading {display: block; width: 100%; position: absolute; background: rgba(252, 248, 227,0.7); color: #8a6d3b; top: 0; left: 0; bottom: 0; margin-top: 56px; border-radius: 0px 0px 4px 4px; text-align: center; line-height: 100px; } 
 		.odd {background-color: #f1f1f1;}
 		.odd svg {background-color: #f1f1f1;}
-	</style>
+		.qd-totalizer {display: block; width: 100%; min-height: 80px; margin-bottom: 20px; background-color:} 
+		.qd-totalizer .text {float: right; min-height: 80px; display: inline-block; word-wrap: break-word; padding-left: 10px; padding-right: 10px; }
+		.qd-totalizer .text .value {display: block; font-size: 28px; text-align: right; }
+		.qd-totalizer .text .info {display: block; width: 100%; text-align: right; }
+		.qd-totalizer i {float:left; width: 80px; height: 80px; text-align: center; line-height: 80px; font-size: 46px; } 
+		</style>
 
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
@@ -68,13 +74,303 @@
 						<ul class="dropdown-menu store" aria-labelledby="dropdownMenu1"> </ul>
 					</div>
 				</form>
-
 			</div>
 		</div>
 	</nav>
 
 	<div class="site">
-		<div class="container-fluid">
+		<div class="container-fluid">		
+			<div class="row">
+				<div class="col-xs-12">
+					<h3>Consolidado mês atual</h3>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-primary">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-current-month" class="value">0</span>
+							<span class="info">Quantidade Pedidos</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-info">
+						<i class="fa fa-barcode"></i> 
+						<div class="text">
+							<span id="qtt-orders-item-current-month" class="value">0</span>
+							<span class="info">Quantidade Itens</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-current-month" class="value">0</span>
+							<span class="info">Valor dos Pedidos</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-invoiced-current-month" class="value">0</span>
+							<span class="info">Pedidos Faturados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-primary">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-pending-by-month" class="value">0</span>
+							<span class="info">Faturamento Pendente</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-info">
+						<i class="fa fa-percent"></i> 
+						<div class="text">
+							<span id="percent-conversion-by-month" class="value">0</span>
+							<span class="info">Conversão</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-pending-by-month" class="value">0</span>
+							<span class="info">Pedidos não Faturados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-canceled-by-month" class="value">0</span>
+							<span class="info">Pedidos Cancelados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h3>Consolidado ano atual</h3>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-primary">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-current-year" class="value">0</span>
+							<span class="info">Quantidade Pedidos</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-info">
+						<i class="fa fa-shopping-cart"></i> 
+						<div class="text">
+							<span id="qtt-orders-item-current-year" class="value">0</span>
+							<span class="info">Quantidade Itens</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-current-year" class="value">0</span>
+							<span class="info">Valor dos Pedidos</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-invoiced-current-year" class="value">0</span>
+							<span class="info">Pedidos Faturados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-primary">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-pending-by-year" class="value">0</span>
+							<span class="info">Faturamento Pendente</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-info">
+						<i class="fa fa-percent"></i> 
+						<div class="text">
+							<span id="percent-conversion-by-year" class="value">0</span>
+							<span class="info">Conversão</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-pending-by-year" class="value">0</span>
+							<span class="info">Pedidos não Faturados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-canceled-by-year" class="value">0</span>
+							<span class="info">Pedidos Cancelados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h3>Consolidado geral</h3>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-primary">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-current-all" class="value">0</span>
+							<span class="info">Quantidade Pedidos</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-info">
+						<i class="fa fa-shopping-cart"></i> 
+						<div class="text">
+							<span id="qtt-orders-item-current-all" class="value">0</span>
+							<span class="info">Quantidade Itens</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-current-all" class="value">0</span>
+							<span class="info">Valor dos Pedidos</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-invoiced-current-all" class="value">0</span>
+							<span class="info">Pedidos Faturados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-primary">
+						<i class="fa fa-dollar"></i>
+						<div class="text">
+							<span id="value-orders-pending-by-all" class="value">0</span>
+							<span class="info">Faturamento Pendente</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-info">
+						<i class="fa fa-percent"></i> 
+						<div class="text">
+							<span id="percent-conversion-by-all" class="value">0</span>
+							<span class="info">Conversão</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-pending-by-all" class="value">0</span>
+							<span class="info">Pedidos não Faturados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+				<div class="col-md-3">
+					<div class="qd-totalizer bg-success">
+						<i class="fa fa-shopping-cart"></i>
+						<div class="text">
+							<span id="qtt-orders-canceled-by-all" class="value">0</span>
+							<span class="info">Pedidos Cancelados</span>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
+
+			</div>
+
+			<hr>
+	
 			<div class="row">
 				<div class="col-xs-12">
 					<h2>Relatório por dia</h2>
@@ -145,6 +441,52 @@
 				</div>
 			</div>
 
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Taxa de conversão por dia</h4>
+					<div class="chart-wrapper">
+						<div id="conversion-by-day"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos por dia por promoção</h4>
+					<div class="chart-wrapper">
+						<div id="orders-by-day-rate-benefits"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos por dia por UTM</h4>
+					<div class="chart-wrapper">
+						<div id="orders-by-day-utm-source"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos faturados por dia por promoção</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-by-day-rate-benefits"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos faturados por dia por UTM</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-by-day-utm-source"></div>
+					</div>
+				</div>
+			</div>
+
+
 			<hr>
 
 			<div class="row">
@@ -207,7 +549,7 @@
 				</div>
 			</div>
 
-			<div class="row odd'">
+			<div class="row odd">
 				<div class="col-xs-12">
 					<h4>Quantidade de pedidos completos X incompletos por mês</h4>
 					<div class="chart-wrapper">
@@ -216,6 +558,50 @@
 				</div>
 			</div>
 
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Taxa de conversão por mês</h4>
+					<div class="chart-wrapper">
+						<div id="conversion-by-month"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos por dia por promoção</h4>
+					<div class="chart-wrapper">
+						<div id="orders-by-month-rate-benefits"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos por dia por UTM</h4>
+					<div class="chart-wrapper">
+						<div id="orders-by-month-utm-source"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row odd">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos faturados por dia por promoção</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-by-month-rate-benefits"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-xs-12">
+					<h4>Quantidade de pedidos faturados por dia por UTM</h4>
+					<div class="chart-wrapper">
+						<div id="orders-invoiced-by-month-utm-source"></div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 

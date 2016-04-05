@@ -22,7 +22,13 @@ try {
 				return qd_number_format(Math.floor(value / 1000), 0, ",", ".") + "k"; 
 			
 			return qd_number_format(value, 2, ",", "."); 
-		}
+		},
+		chartPercentFormat:function(value,name,i) {
+			if (value) 
+        		return value +'%';
+        	else
+        		return null;
+        }
 	};
 
 	var Common = {
@@ -74,6 +80,30 @@ try {
 
 					// Quantidade de pedidos por mês por forma de pagamento
 					Common.ordersQttPaymentTypeChart(false);
+					
+					// Quantidade de pedidos por dia por promoção
+					Common.ordersQttRateBenefitsChart(true);
+
+					// Quantidade de pedidos por mês por promoção
+					Common.ordersQttRateBenefitsChart(false);
+
+					// Quantidade de pedidos faturados por dia por promoção
+					Common.ordersInvoicedQttRateBenefitsChart(true);
+
+					// Quantidade de pedidos faturados por mês por promoção
+					Common.ordersInvoicedQttRateBenefitsChart(false);
+					
+					// Quantidade de pedidos por dia por UTM
+					Common.ordersQttUtmSourceChart(true);
+
+					// Quantidade de pedidos por mês por UTM
+					Common.ordersQttUtmSourceChart(false);
+					
+					// Quantidade de pedidos faturados por dia por UTM
+					Common.ordersInvoicedQttUtmSourceChart(true);
+
+					// Quantidade de pedidos faturados por mês por UTM
+					Common.ordersInvoicedQttUtmSourceChart(false);
 
 					// Quantidade de pedidos faturados por dia
 					Common.ordersInvoicedQttChart(true);
@@ -98,9 +128,24 @@ try {
 
 					// Quantidade de pedidos completos X incompletos por mês
 					Common.ordersIncompleteQttChart(false);
+
+					// Conversão GA x OMS x Faturado OMS por dia
+					Common.conversionChart(true);
+
+					// Conversão GA x OMS x Faturado OMS por mês
+					Common.conversionChart(false);
+					
+					// Consolidado ano geral
+					Common.consolidated();
+
+					// Consolidado mês atual
+					Common.consolidatedByMonth();
+
+					// Consolidado ano atual
+					Common.consolidatedByYear();
 				}
 			}
-		},
+		}, 
 		ajaxStop: function() {},
 		windowOnload: function() {},
 		loading: function() {
@@ -374,7 +419,7 @@ try {
 			return Common.ordersByMonthRequestjqXHR;
 		},
 		ordersQttChart: function(day) {
-			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {			
 				datajson.chartOrdersLabel.unshift('x');
 				datajson.chartOrdersQtt.unshift('data1');
 				datajson.chartOrdersQttFulfillment.unshift('data2');
@@ -475,32 +520,258 @@ try {
 		ordersQttPaymentTypeChart: function(day) {
 			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
 				columns= [];
-				for(var i in datajson.chartOrdersValuePaymentsType) {
+				for(var i in datajson.chartOrdersPaymentNames) {
 					columns.push(new Array(i));
 				} 
 				columns.push(new Array('Marketplace'));
 				
 				var index = 0;
-				for(var i in datajson.chartOrdersValueByPaymentType) {
+				for(var i in datajson.chartOrdersQttPaymentNames) {
 					index = 0;
-					for(var j in datajson.chartOrdersValuePaymentsType) {
-						var data = datajson.chartOrdersValueByPaymentType[i][j];
+					for(var j in datajson.chartOrdersPaymentNames) {
+						var data = datajson.chartOrdersQttPaymentNames[i][j];
 						if (data != undefined && data != null) 
 							columns[index].push(data);	
 						else
-							columns[index].push(0);	
+							columns[index].push(null);	
 						index++;
 					} 
 				}
 
-				for(var j in datajson.chartOrdersQttFulfillment) {
-					columns[index].push( datajson.chartOrdersQttFulfillment[j]);
+				var localChartOrdersQttFulfillment = new Array();
+				for(var i in datajson.chartOrdersQttFulfillment) {
+					if (!isNaN(parseInt(datajson.chartOrdersQttFulfillment[i]))) 
+						localChartOrdersQttFulfillment.push(datajson.chartOrdersQttFulfillment[i]);
+				}
+
+				for(var j in localChartOrdersQttFulfillment) {
+					columns[index].push( localChartOrdersQttFulfillment[j]);
 				}
 				
 				columns.unshift(datajson.chartOrdersLabel);
 
 				var chartLines = c3.generate({
 					bindto: (day ? '#orders-qtt-by-day-payment-type' : '#orders-qtt-by-month-payment-type'),
+					data: {
+						x: 'x',
+						columns:columns ,
+						type: 'area',
+						labels: false
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	
+					}	
+				});
+
+			});
+		},
+		ordersQttRateBenefitsChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				columns= [];
+				for(var i in datajson.chartOrdersRateAndBenefits) {
+					columns.push(new Array(i));
+				} 
+				
+				var index = 0;
+				for(var i in datajson.chartOrdersQttRateAndBenefits) {
+					index = 0;
+					for(var j in datajson.chartOrdersRateAndBenefits) {
+						var data = datajson.chartOrdersQttRateAndBenefits[i][j];
+						if (data != undefined && data != null) 
+							columns[index].push(data);	
+						else
+							columns[index].push(null);	
+						index++;
+					} 
+				}
+
+				columns.unshift(datajson.chartOrdersLabel);
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-by-day-rate-benefits' : '#orders-by-month-rate-benefits'),
+					data: {
+						x: 'x',
+						columns:columns ,
+						type: 'area',
+						labels: false
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	
+					}	
+				});
+
+			});
+		},
+		ordersInvoicedQttRateBenefitsChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				columns= [];
+				for(var i in datajson.chartOrdersInvoicedRateAndBenefits) {
+					columns.push(new Array(i));
+				} 
+				
+				var index = 0;
+				for(var i in datajson.chartOrdersQttInvoicedRateAndBenefits) {
+					index = 0;
+					for(var j in datajson.chartOrdersInvoicedRateAndBenefits) {
+						var data = datajson.chartOrdersQttInvoicedRateAndBenefits[i][j];
+						if (data != undefined && data != null) 
+							columns[index].push(data);	
+						else
+							columns[index].push(null);	
+						index++;
+					} 
+				}
+
+				columns.unshift(datajson.chartOrdersLabel);
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-invoiced-by-day-rate-benefits' : '#orders-invoiced-by-month-rate-benefits'),
+					data: {
+						x: 'x',
+						columns:columns ,
+						type: 'area',
+						labels: false
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	
+					}	
+				});
+
+			});
+		},
+		ordersQttUtmSourceChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				columns= [];
+				for(var i in datajson.chartOrdersUtmSource) {
+					columns.push(new Array(i));
+				} 
+				
+				var index = 0;
+				for(var i in datajson.chartOrdersQttUtmSource) {
+					index = 0;
+					for(var j in datajson.chartOrdersUtmSource) {
+						var data = datajson.chartOrdersQttUtmSource[i][j];
+						if (data != undefined && data != null) 
+							columns[index].push(data);	
+						else
+							columns[index].push(null);	
+						index++;
+					} 
+				}
+
+				columns.unshift(datajson.chartOrdersLabel);
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-by-day-utm-source' : '#orders-by-month-utm-source'),
+					data: {
+						x: 'x',
+						columns:columns ,
+						type: 'area',
+						labels: false
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: { 
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }, 
+				        y: {
+				        	tick: {
+				                
+				            }
+				        }
+				    },
+				    tooltip: {
+				    	
+					}	
+				});
+
+			});
+		},
+		ordersInvoicedQttUtmSourceChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
+				columns= [];
+				for(var i in datajson.chartOrdersInvoicedUtmSource) {
+					columns.push(new Array(i));
+				} 
+				
+				var index = 0;
+				for(var i in datajson.chartOrdersQttInvoicedUtmSource) {
+					index = 0;
+					for(var j in datajson.chartOrdersInvoicedUtmSource) {
+						var data = datajson.chartOrdersQttInvoicedUtmSource[i][j];
+						if (data != undefined && data != null) 
+							columns[index].push(data);	
+						else
+							columns[index].push(null);	
+						index++;
+					} 
+				}
+
+				columns.unshift(datajson.chartOrdersLabel);
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#orders-invoiced-by-day-utm-source' : '#orders-invoiced-by-month-utm-source'),
 					data: {
 						x: 'x',
 						columns:columns ,
@@ -626,26 +897,33 @@ try {
 		ordersInvoicedPaymentTypeChart: function(day) {
 			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
 				columns= [];
-				for(var i in datajson.chartOrdersValuePaymentsType) {
+				for(var i in datajson.chartOrdersInvoicedPaymentNames) {
 					columns.push(new Array(i));
 				} 
 				columns.push(new Array('Marketplace'));
 				
 				var index = 0;
-				for(var i in datajson.chartOrdersValueByPaymentType) {
+				for(var i in datajson.chartOrdersQttInvoicedPaymentNames) {
 					index = 0;
-					for(var j in datajson.chartOrdersValuePaymentsType) {
-						var data = datajson.chartOrdersValueByPaymentType[i][j];
+					for(var j in datajson.chartOrdersInvoicedPaymentNames) {
+						var data = datajson.chartOrdersQttInvoicedPaymentNames[i][j];
 						if (data != undefined && data != null) 
 							columns[index].push(data);	
 						else
-							columns[index].push(0);	
+							columns[index].push(null);	
 						index++;
 					} 
 				}
 
-				for(var j in datajson.chartOrdersQttFulfillment) {
-					columns[index].push( datajson.chartOrdersQttFulfillment[j]);
+
+				var localChartOrdersQttFulfillment = new Array();
+				for(var i in datajson.chartOrdersQttFulfillment) {
+					if (!isNaN(parseInt(datajson.chartOrdersQttFulfillment[i]))) 
+						localChartOrdersQttFulfillment.push(datajson.chartOrdersQttFulfillment[i]);
+				}
+
+				for(var j in localChartOrdersQttFulfillment) {
+					columns[index].push( localChartOrdersQttFulfillment[j]);
 				}
 				
 				columns.unshift(datajson.chartOrdersLabel);
@@ -720,7 +998,198 @@ try {
 
 			});
 		},
-		
+		conversionChart: function(day) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {			
+			
+				var localChartOrdersQtt = new Array();
+				for(var i in datajson.chartOrdersQtt) {
+					if (!isNaN(parseInt(datajson.chartOrdersQtt[i]))) 
+						localChartOrdersQtt.push(datajson.chartOrdersQtt[i]);
+				}
+
+				var localChartOrdersInvoicedQtt = new Array();
+				for(var i in datajson.chartOrdersInvoicedQtt) {
+					if (!isNaN(parseInt(datajson.chartOrdersInvoicedQtt[i]))) 
+						localChartOrdersInvoicedQtt.push(datajson.chartOrdersInvoicedQtt[i]);
+				}
+			
+
+				var oms = new Array();
+				var omsInvoiced = new Array();
+				var ga = new Array();
+				for(var i in datajson.gaSessions) {
+					if (datajson.gaSessions[i] > 0) {
+						oms.push(   ((localChartOrdersQtt[i] / datajson.gaSessions[i]) * 100).toFixed(2)   );
+						omsInvoiced.push(   ((localChartOrdersInvoicedQtt[i] / datajson.gaSessions[i]) * 100).toFixed(2)   );
+						ga.push(   ((datajson.gaTransactions[i] / datajson.gaSessions[i]) * 100).toFixed(2)   );
+					}
+					else {
+						oms.push(null);
+						omsInvoiced.push(null);
+						ga.push(null);
+					}
+				}
+
+				oms.unshift('data1');
+				omsInvoiced.unshift('data2');
+				ga.unshift('data3');
+
+				var chartLines = c3.generate({
+					bindto: (day ? '#conversion-by-day' : '#conversion-by-month'),
+					data: {
+						x: 'x',
+						columns: [
+							datajson.chartOrdersLabel,
+							oms,
+							omsInvoiced,
+							ga
+						],
+						names: {
+							data1: 'Conversão Loja',
+							data2: 'Conversão Faturados',
+							data3: 'Conversão GA'
+						},
+						type: 'area',
+						labels: {
+				            format: {
+				                data1:Tools.chartPercentFormat,
+				                data2:Tools.chartPercentFormat,
+				                data3:Tools.chartPercentFormat
+				            }
+				        }
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    },
+				    tooltip: {
+				        format: {
+				            title: function (d) { return 'Conversão ' + d; },
+				            value: function (value, ratio, id, i) {
+				            	if (id === 'data1') 
+				            		return value + '% - Pedidos: ' + datajson.chartOrdersQtt[i+1] + ', Sessões: ' + datajson.gaSessions[i];
+
+				            	if (id === 'data2') 
+				            		return value + '% - Pedidos: ' + datajson.chartOrdersInvoicedQtt[i+1] + ', Sessões: ' + datajson.gaSessions[i];
+
+				            	if (id === 'data3') 
+				            		return value + '% - Pedidos: ' + datajson.gaTransactions[i] + ', Sessões: ' + datajson.gaSessions[i];
+
+				                return value;
+				            }
+				        }
+				    }
+				});
+			});
+		},
+		consolidated: function() {
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_report_url + "/pvt/report/orders",
+				dataType: "json",
+				data: {
+					store: Common._QD_query_string.store
+				},
+				success:function(datajson) {
+					$('#qtt-orders-current-all').text(datajson.chartOrdersAllQtt[datajson.chartOrdersAllQtt.length-1]);
+					$('#qtt-orders-item-current-all').text(datajson.chartOrdersAllQttItems[datajson.chartOrdersAllQttItems.length-1]);
+					$('#value-orders-current-all').text(Tools.chartMonetaryFormat(datajson.chartOrdersAllValue[datajson.chartOrdersAllValue.length-1]));
+					$('#value-orders-invoiced-current-all').text(Tools.chartMonetaryFormat(datajson.chartOrdersAllInvoicedValue[datajson.chartOrdersAllInvoicedValue.length-1]));
+					$('#value-orders-pending-by-all').text(Tools.chartMonetaryFormat(datajson.chartOrdersAllPendingValue[datajson.chartOrdersAllPendingValue.length-1]));
+
+					if (!datajson.gaSessions[0])
+						$('#percent-conversion-by-all').text('...');
+					else
+						$('#percent-conversion-by-all').text(((datajson.chartOrdersAllQtt[0] / datajson.gaSessions[0]) * 100).toFixed(2) +'%');
+
+					$('#qtt-orders-pending-by-all').text(datajson.chartOrdersAllPendingQtt);
+					$('#qtt-orders-canceled-by-all').text(datajson.chartOrdersAllCanceledQtt);
+				}
+			});
+		},
+		consolidatedByMonth: function() {
+			function padLeft(value, length) {
+			    return (value.toString().length < length)? padLeft("0" + value, length): value;
+			}
+
+			var dateStartObject = new Date();
+    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-01';
+
+    		var dateEndObject = new Date();
+    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
+
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_report_url + "/pvt/report/orders-by-month",
+				dataType: "json",
+				data: {
+					store: Common._QD_query_string.store,
+					dateStart: dateStart,
+					dateEnd: dateEnd
+				},
+				success:function(datajson) {
+					$('#qtt-orders-current-month').text(datajson.chartOrdersQtt[datajson.chartOrdersQtt.length-1]);
+					$('#qtt-orders-item-current-month').text(datajson.chartOrdersQttItems[datajson.chartOrdersQttItems.length-1]);
+					$('#value-orders-current-month').text(Tools.chartMonetaryFormat(datajson.chartOrdersValue[datajson.chartOrdersValue.length-1]));
+					$('#value-orders-invoiced-current-month').text(Tools.chartMonetaryFormat(datajson.chartOrdersInvoicedValue[datajson.chartOrdersInvoicedValue.length-1]));
+					$('#value-orders-pending-by-month').text(Tools.chartMonetaryFormat(datajson.chartOrdersPendingValue[datajson.chartOrdersPendingValue.length-1]));
+					
+					if (!datajson.gaSessions[0])
+						$('#percent-conversion-by-month').text('...');
+					else
+						$('#percent-conversion-by-month').text(((datajson.chartOrdersQtt[0] / datajson.gaSessions[0]) * 100).toFixed(2) +'%');
+
+					$('#qtt-orders-pending-by-month').text(datajson.chartOrdersPendingQtt);
+					$('#qtt-orders-canceled-by-month').text(datajson.chartOrdersCanceledQtt);
+				}
+			});
+		},
+		consolidatedByYear: function() {
+			function padLeft(value, length) {
+			    return (value.toString().length < length)? padLeft("0" + value, length): value;
+			}
+
+			var dateStartObject = new Date();
+			dateStartObject.setDate(dateStartObject.getDate() - 30);
+    		var dateStart = dateStartObject.getFullYear() + '-' + padLeft((dateStartObject.getMonth() + 1), 2) + '-01';
+
+    		var dateEndObject = new Date();
+    		var dateEnd = dateEndObject.getFullYear() + '-' + padLeft((dateEndObject.getMonth() + 1), 2) + '-' + padLeft(dateEndObject.getDate(), 2);
+
+			$.ajax({
+				headers: Common._QD_ajax_headers,
+				url: Common._QD_restful_report_url + "/pvt/report/orders-by-year",
+				dataType: "json",
+				data: {
+					store: Common._QD_query_string.store,
+					dateStart: dateStart,
+					dateEnd: dateEnd
+				},
+				success:function(datajson) {
+					$('#qtt-orders-current-year').text(datajson.chartOrdersQtt[datajson.chartOrdersQtt.length-1]);
+					$('#qtt-orders-item-current-year').text(datajson.chartOrdersQttItems[datajson.chartOrdersQttItems.length-1]);
+					$('#value-orders-current-year').text(Tools.chartMonetaryFormat(datajson.chartOrdersValue[datajson.chartOrdersValue.length-1]));
+					$('#value-orders-invoiced-current-year').text(Tools.chartMonetaryFormat(datajson.chartOrdersInvoicedValue[datajson.chartOrdersInvoicedValue.length-1]));
+					$('#value-orders-pending-by-year').text(Tools.chartMonetaryFormat(datajson.chartOrdersPendingValue[datajson.chartOrdersPendingValue.length-1]));
+					
+					if (!datajson.gaSessions[0])
+						$('#percent-conversion-by-year').text('...');
+					else
+						$('#percent-conversion-by-year').text(((datajson.chartOrdersQtt[0] / datajson.gaSessions[0]) * 100).toFixed(2) +'%');
+					$('#qtt-orders-pending-by-year').text(datajson.chartOrdersPendingQtt);
+					$('#qtt-orders-canceled-by-year').text(datajson.chartOrdersCanceledQtt);
+				}
+			});
+		},
 		loginModal: function() {
 			var form = $('<form class="login"> <div class="row"> <div class="col-xs-12"> <div class="form-group"> <label for="email">E-mail: </label> <input type="email" class="form-control" id="email" name="email" placeholder="E-mail" value=""> </div> </div> </div> <button type="submit" class="btn btn-primary btn-login">Login</button> </form>');
 			var modal = Common.preparingModal({
