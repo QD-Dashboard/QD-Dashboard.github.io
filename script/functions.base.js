@@ -1107,7 +1107,7 @@ try {
 					$('#value-orders-pending-by-all').text(Tools.chartMonetaryFormat(datajson.chartOrdersAllPendingValue[datajson.chartOrdersAllPendingValue.length-1]));
 
 					if (!datajson.gaSessions[0])
-						$('#percent-conversion-by-all').text('...');
+						$('#percent-conversion-by-all').text('---');
 					else
 						$('#percent-conversion-by-all').text(((datajson.chartOrdersAllQtt[0] / datajson.gaSessions[0]) * 100).toFixed(2) +'%');
 
@@ -1144,7 +1144,7 @@ try {
 					$('#value-orders-pending-by-month').text(Tools.chartMonetaryFormat(datajson.chartOrdersPendingValue[datajson.chartOrdersPendingValue.length-1]));
 					
 					if (!datajson.gaSessions[0])
-						$('#percent-conversion-by-month').text('...');
+						$('#percent-conversion-by-month').text('---');
 					else
 						$('#percent-conversion-by-month').text(((datajson.chartOrdersQtt[0] / datajson.gaSessions[0]) * 100).toFixed(2) +'%');
 
@@ -1182,7 +1182,7 @@ try {
 					$('#value-orders-pending-by-year').text(Tools.chartMonetaryFormat(datajson.chartOrdersPendingValue[datajson.chartOrdersPendingValue.length-1]));
 					
 					if (!datajson.gaSessions[0])
-						$('#percent-conversion-by-year').text('...');
+						$('#percent-conversion-by-year').text('---');
 					else
 						$('#percent-conversion-by-year').text(((datajson.chartOrdersQtt[0] / datajson.gaSessions[0]) * 100).toFixed(2) +'%');
 					$('#qtt-orders-pending-by-year').text(datajson.chartOrdersPendingQtt);
