@@ -7,8 +7,8 @@
 
 	<title>Quatro Digital - Dashboard</title>
 
-	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
 	<link rel="stylesheet" href="script/c3.min.css">
 
 	<style>
@@ -27,11 +27,16 @@
 		.qd-totalizer .text .value {display: block; font-size: 28px; text-align: right; }
 		.qd-totalizer .text .info {display: block; width: 100%; text-align: right; }
 		.qd-totalizer i {float:left; width: 80px; height: 80px; text-align: center; line-height: 80px; font-size: 46px; } 
-		</style>
+		.site h4 { padding-top: 20px; padding-bottom: 20px; }		
+		.aside {display: block; width: 330px; position: fixed; top: 80px; right: 10px; }
+		.aside-list {list-style: none; margin:0px; padding: 0px; }
+		.aside-list a {display: block; width: 100%; padding: 6px 10px; font-size: 12px; font-weight: 500; color: #767676; text-decoration:none; border-left: 2px solid white; }
+		.aside-list a:hover, .aside-list a.active {text-decoration:none; background-color: transparent; border-left: 2px solid #563d7c; color: #563d7c; }
+		.site {display: block; position: absolute; top: 80px; left: 0px; right: 350px; }
+	</style>
 
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-	<script src="http://cdn.rawgit.com/nnnick/Chart.js/v1.0.2/Chart.min.js" charset="utf-8"></script>
 	<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js" charset="utf-8"></script>
 	<script src="script/d3.min.js" charset="utf-8"></script>
 	<script src="script/c3.min.js" charset="utf-8"></script>
@@ -66,6 +71,7 @@
 				<ul class="nav navbar-nav">
 					<li><a href="#" class="qd-link-add-loja">Adicionar Loja</a></li>
 					<li><a href="#" class="qd-link-settings">Configurações</a></li>
+					<li><a href="#" class="qd-link-logout">Sair</a></li>
 				</ul>
 
 				<form class="navbar-form navbar-left" role="search">
@@ -77,12 +83,11 @@
 			</div>
 		</div>
 	</nav>
-
 	<div class="site">
 		<div class="container-fluid">		
 			<div class="row">
 				<div class="col-xs-12">
-					<h3>Consolidado mês atual</h3>
+					<h3 id="title-consolidated-current-month">Consolidado mês atual</h3>
 				</div>
 			</div>
 
@@ -178,7 +183,7 @@
 
 			<div class="row">
 				<div class="col-xs-12">
-					<h3>Consolidado ano atual</h3>
+					<h3 id="title-consolidated-current-year">Consolidado ano atual</h3>
 				</div>
 			</div>
 
@@ -274,7 +279,7 @@
 
 			<div class="row">
 				<div class="col-xs-12">
-					<h3>Consolidado geral</h3>
+					<h3 id="title-consolidated-all">Consolidado geral</h3>
 				</div>
 			</div>
 
@@ -369,236 +374,358 @@
 
 			</div>
 
-			<hr>
+			<div class="container-charts-by-day">
+				<div class="row odd ">
+					<div class="col-xs-12">
+						<h2>Relatório por dia</h2>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-qtt-by-day">Quantidade de pedidos por dia</h4>
+						<div class="chart-wrapper">
+							<div id="orders-qtt-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-value-by-day">Valor dos pedidos por dia</h4>
+						<div class="chart-wrapper">
+							<div id="orders-value-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-qtt-by-day-payment-type">Quantidade de pedidos por dia por forma de pagamento</h4>
+						<div class="chart-wrapper">
+							<div id="orders-qtt-by-day-payment-type"></div>
+						</div>
+					</div>
+				</div>
+
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-qtt-by-day">Quantidade de pedidos faturados por dia</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-qtt-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-value-by-day">Valor dos pedidos faturados por dia</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-value-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-by-day-payment-type">Quantidade de pedidos faturados por dia por forma de pagamento</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-by-day-payment-type"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-incomplete-by-day">Quantidade de pedidos completos X incompletos por dia</h4>
+						<div class="chart-wrapper">
+							<div id="orders-incomplete-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-conversion-by-day">Taxa de conversão por dia</h4>
+						<div class="chart-wrapper">
+							<div id="conversion-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-by-day-rate-benefits">Quantidade de pedidos por dia por promoção</h4>
+						<div class="chart-wrapper">
+							<div id="orders-by-day-rate-benefits"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-by-day-utm-source">Quantidade de pedidos por dia por origem</h4>
+						<div class="chart-wrapper">
+							<div id="orders-by-day-utm-source"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-by-day-rate-benefits">Quantidade de pedidos faturados por dia por promoção</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-by-day-rate-benefits"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-by-day-utm-source">Quantidade de pedidos faturados por dia por origem</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-by-day-utm-source"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-tickets-qtt-by-day">Quantidade média de itens por pedido por dia</h4>
+						<div class="chart-wrapper">
+							<div id="tickets-qtt-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-tickets-invoiced-qtt-by-day">Quantidade média de itens por pedido faturado por dia</h4>
+						<div class="chart-wrapper">
+							<div id="tickets-invoiced-qtt-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-tickets-value-by-day">Ticket médio por dia</h4>
+						<div class="chart-wrapper">
+							<div id="tickets-value-by-day"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-tickets-invoiced-value-by-day">Ticket médio faturado por dia</h4>
+						<div class="chart-wrapper">
+							<div id="tickets-invoiced-value-by-day"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="container-charts-by-month">
+				<div class="row">
+					<div class="col-xs-12">
+						<h2>Relatório por mês</h2>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-qtt-by-month">Quantidade de pedidos por mês</h4>
+						<div class="chart-wrapper">
+							<div id="orders-qtt-by-month"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-value-by-month">Valor dos pedidos por mês</h4>
+						<div class="chart-wrapper">
+							<div id="orders-value-by-month"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-qtt-by-month-payment-type">Quantidade de pedidos por mês por forma de pagamento</h4>
+						<div class="chart-wrapper">
+							<div id="orders-qtt-by-month-payment-type"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-qtt-by-month">Quantidade de pedidos faturados por mês</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-qtt-by-month"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-value-by-month">Valor dos pedidos faturados por mês</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-value-by-month"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-by-month-payment-type">Quantidade de pedidos faturados por mês por forma de pagamento</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-by-month-payment-type"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-incomplete-by-month">Quantidade de pedidos completos X incompletos por mês</h4>
+						<div class="chart-wrapper">
+							<div id="orders-incomplete-by-month"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-conversion-by-month">Taxa de conversão por mês</h4>
+						<div class="chart-wrapper">
+							<div id="conversion-by-month"></div> 
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-by-month-rate-benefits">Quantidade de pedidos por mês por promoção</h4>
+						<div class="chart-wrapper">
+							<div id="orders-by-month-rate-benefits"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-by-month-utm-source">Quantidade de pedidos por mês por origem</h4>
+						<div class="chart-wrapper">
+							<div id="orders-by-month-utm-source"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-by-month-rate-benefits">Quantidade de pedidos faturados por mês por promoção</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-by-month-rate-benefits"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-orders-invoiced-by-month-utm-source">Quantidade de pedidos faturados por mês por origem</h4>
+						<div class="chart-wrapper">
+							<div id="orders-invoiced-by-month-utm-source"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-tickets-qtt-by-month">Quantidade média de itens por pedido por mês</h4>
+						<div class="chart-wrapper">
+							<div id="tickets-qtt-by-month"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-tickets-invoiced-qtt-by-month">Quantidade média de itens por pedido faturado por mês</h4>
+						<div class="chart-wrapper">
+							<div id="tickets-invoiced-qtt-by-month"></div>
+						</div>
+					</div>
+				</div>			
+
+				<div class="row odd">
+					<div class="col-xs-12">
+						<h4 id="title-tickets-value-by-month">Ticket médio por mês</h4>
+						<div class="chart-wrapper">
+							<div id="tickets-value-by-month"></div>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+					<div class="col-xs-12">
+						<h4 id="title-tickets-invoiced-value-by-month">Ticket médio faturado por mês</h4>
+						<div class="chart-wrapper">
+							<div id="tickets-invoiced-value-by-month"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 	
-			<div class="row">
-				<div class="col-xs-12">
-					<h2>Relatório por dia</h2>
+	<div class="aside">
+		<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+			<div class="panel panel-default">
+				<div class="panel-heading" role="tab" id="headingOne">
+					<h4 class="panel-title">
+						<a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+							Consolidado
+						</a>
+					</h4>
 				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos por dia</h4>
-					<div class="chart-wrapper">
-						<div id="orders-qtt-by-day"></div>
+				<div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+					<div class="panel-body">
+						<ul class="aside-list consolidate">
+							<li> <a href="#title-consolidated-current-month">Consolidado mês atual</a> </li>
+							<li> <a href="#title-consolidated-current-year">Consolidado ano atual</a> </li>
+							<li> <a href="#title-consolidated-all">Consolidado geral</a> </li>
+						</ul>
 					</div>
 				</div>
 			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Valor dos pedidos por dia</h4>
-					<div class="chart-wrapper">
-						<div id="orders-value-by-day"></div>
+			<div class="panel panel-default">
+				<div class="panel-heading" role="tab" id="headingTwo">
+					<h4 class="panel-title">
+						<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+							Relatórios por dia
+						</a>
+					</h4>
+				</div>
+				<div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+					<div class="panel-body">
+						<ul class="aside-list by-day"></ul>
 					</div>
 				</div>
 			</div>
-		
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos por dia por forma de pagamento</h4>
-					<div class="chart-wrapper">
-						<div id="orders-qtt-by-day-payment-type"></div>
-					</div>
+			<div class="panel panel-default">
+				<div class="panel-heading" role="tab" id="headingThree">
+					<h4 class="panel-title">
+						<a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+							Relatórios por mês
+						</a>
+					</h4>
 				</div>
-			</div>
-
-			
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos faturados por dia</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-qtt-by-day"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Valor dos pedidos faturados por dia</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-value-by-day"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos faturados por dia por forma de pagamento</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-by-day-payment-type"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos completos X incompletos por dia</h4>
-					<div class="chart-wrapper">
-						<div id="orders-incomplete-by-day"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Taxa de conversão por dia</h4>
-					<div class="chart-wrapper">
-						<div id="conversion-by-day"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos por dia por promoção</h4>
-					<div class="chart-wrapper">
-						<div id="orders-by-day-rate-benefits"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos por dia por UTM</h4>
-					<div class="chart-wrapper">
-						<div id="orders-by-day-utm-source"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos faturados por dia por promoção</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-by-day-rate-benefits"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos faturados por dia por UTM</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-by-day-utm-source"></div>
-					</div>
-				</div>
-			</div>
-
-
-			<hr>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h2>Relatório por mês</h2>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos por mês</h4>
-					<div class="chart-wrapper">
-						<div id="orders-qtt-by-month"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Valor dos pedidos por mês</h4>
-					<div class="chart-wrapper">
-						<div id="orders-value-by-month"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos por mês por forma de pagamento</h4>
-					<div class="chart-wrapper">
-						<div id="orders-qtt-by-month-payment-type"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos faturados por mês</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-qtt-by-month"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Valor dos pedidos faturados por mês</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-value-by-month"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos faturados por mês por forma de pagamento</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-by-month-payment-type"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos completos X incompletos por mês</h4>
-					<div class="chart-wrapper">
-						<div id="orders-incomplete-by-month"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Taxa de conversão por mês</h4>
-					<div class="chart-wrapper">
-						<div id="conversion-by-month"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos por dia por promoção</h4>
-					<div class="chart-wrapper">
-						<div id="orders-by-month-rate-benefits"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos por dia por UTM</h4>
-					<div class="chart-wrapper">
-						<div id="orders-by-month-utm-source"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row odd">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos faturados por dia por promoção</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-by-month-rate-benefits"></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="row">
-				<div class="col-xs-12">
-					<h4>Quantidade de pedidos faturados por dia por UTM</h4>
-					<div class="chart-wrapper">
-						<div id="orders-invoiced-by-month-utm-source"></div>
+				<div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+					<div class="panel-body">
+						<ul class="aside-list by-month"></ul>
 					</div>
 				</div>
 			</div>

@@ -36,6 +36,11 @@ try {
 			Common._QD_restful_url = "http://dashboardapi.quatrodigital.com.br";
 			Common._QD_restful_report_url = "http://dashboardapi.quatrodigital.com.br";
 
+			if (location.host.indexOf('local') == 0) {
+				Common._QD_restful_url = "http://local.dashboardapi.quatrodigital.com.br:8080";
+				Common._QD_restful_report_url = "http://local.dashboardapi.quatrodigital.com.br:8080";				
+			}
+
 			Common.queryString();
 			Common.checkAuthentication();
 			Common.loading();
@@ -59,15 +64,41 @@ try {
 
 				Common.selectStore();
 				Common.qdLinkAddLoja();
+				Common.logout();
 
 				if(Common._QD_query_string.store){
 					Common.qdLinkSettings();
+					Common.asideBuild();
 					
 					// Quantidade de pedidos por dia
 					Common.ordersQttChart(true);
 
 					// Quantidade de pedidos por mês
 					Common.ordersQttChart(false);
+
+					// ticket medio por dia
+					Common.ticketsQttChart(true , false);
+
+					// ticket medio por mês
+					Common.ticketsQttChart(false , false);
+
+					// ticket invoiced medio por dia
+					Common.ticketsQttChart(true , true);
+
+					// ticket invoiced medio por mês
+					Common.ticketsQttChart(false, true);
+
+					// valor do ticket medio por dia
+					Common.ticketsValueChart(true , false);
+
+					// valor do ticket medio por mês
+					Common.ticketsValueChart(false , false);
+
+					// valor do ticket invoiced medio por dia
+					Common.ticketsValueChart(true , true);
+
+					// valor do ticket invoiced medio por mês
+					Common.ticketsValueChart(false, true);
 
 					// Valor dos pedidos por dia
 					Common.ordersValueChart(true); 
@@ -154,6 +185,63 @@ try {
 			});
 			$(document).ajaxStop(function() {
 				$('.qd-loading').hide();
+			});
+		},
+		asideBuild: function() {
+			var asideChartsByDay = $('.aside-list.by-day');
+			var asideChartsByMonth = $('.aside-list.by-month');
+			
+			$('.container-charts-by-day h4').each(function(){
+				asideChartsByDay.append('<li><a href="#'+$(this).attr('id')+'">'+$(this).text()+'</a></li>');
+			});
+
+			$('.container-charts-by-month h4').each(function(){
+				asideChartsByMonth.append('<li><a href="#'+$(this).attr('id')+'">'+$(this).text()+'</a></li>');
+			});
+
+			$(document).on('click' , '.aside-list li a' , function(){
+				$('.aside-list li a').removeClass('active');
+				$(this).addClass('active');
+				var href = $(this).attr('href');
+				$(document.body).stop().animate({
+					'scrollTop': $(href).offset().top
+				}, 1000);
+				return false;  
+			});
+
+			$(window).scroll(function(){
+				if($(window).scrollTop() > 80) {
+					$('.aside:not(.pos-on)').addClass('pos-on').animate({
+						top:10
+					}, 500);
+				} else if($(window).scrollTop() <= 60) {
+					$('.aside.pos-on').removeClass('pos-on').animate({
+						top:80
+					}, 500);
+				}
+				return false;
+			});
+		},
+		logout: function() {
+			$('.qd-link-logout').on('click', function(){
+				$.ajax({
+					headers: Common._QD_ajax_headers,
+					type: 'POST',
+					url: Common._QD_restful_url + '/pvt/logout',
+					beforeSend:function(){
+						var modal = Common.preparingModal({
+							doNotClose: true,
+							title: 'Aguarde',
+							body: 'Aguarde...'
+						});
+						modal.modal();
+					},
+					dataType:'json',
+					success: function(data) {
+						$.removeCookie("qdToken");
+						window.location.reload();
+					}
+				});
 			});
 		},
 		qdLinkSettings: function() {
@@ -517,6 +605,97 @@ try {
 
 			});
 		},
+		ticketsQttChart: function(day, invoiced) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {			
+			
+				var data1 = (!invoiced ? datajson.chartTicketsQtt : datajson.chartTicketsInvoicedQtt );
+				var data2 = (!invoiced ? datajson.chartTicketsFulfillmentQtt : datajson.chartTicketsInvoicedFulfillmentQtt );
+				var data3 = (!invoiced ? datajson.chartTicketsMarketplaceQtt : datajson.chartTicketsInvoicedMarketplaceQtt );
+				
+				data1.unshift('data1');
+				data2.unshift('data2');
+				data3.unshift('data3');
+
+				var chartLines = c3.generate({
+					bindto: (!invoiced ? (day ? '#tickets-qtt-by-day' : '#tickets-qtt-by-month') : (day ? '#tickets-invoiced-qtt-by-day' : '#tickets-invoiced-qtt-by-month')),
+					data: {
+						x: 'x',
+						columns: [
+							datajson.chartOrdersLabel,
+							data1,
+							data2,
+							data3
+						],
+						names: {
+							data1: 'Ticket medio',
+							data2: 'Ticket medio loja',
+							data3: 'Ticket medio marketplace',
+						},
+						type: 'area',
+						labels: true
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    }
+				});
+
+			});
+		},
+		ticketsValueChart: function(day, invoiced) {
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {			
+			
+				var data1 = (!invoiced ? datajson.chartTicketsValue : datajson.chartTicketsInvoicedValue );
+				var data2 = (!invoiced ? datajson.chartTicketsFulfillmentValue : datajson.chartTicketsInvoicedFulfillmentValue );
+				var data3 = (!invoiced ? datajson.chartTicketsMarketplaceValue : datajson.chartTicketsInvoicedMarketplaceValue );
+				
+				data1.unshift('data1');
+				data2.unshift('data2');
+				data3.unshift('data3');
+
+				var chartLines = c3.generate({
+					bindto: (!invoiced ? (day ? '#tickets-value-by-day' : '#tickets-value-by-month') : (day ? '#tickets-invoiced-value-by-day' : '#tickets-invoiced-value-by-month')),
+					data: {
+						x: 'x',
+						columns: [
+							datajson.chartOrdersLabel,
+							data1,
+							data2,
+							data3
+						],
+						names: {
+							data1: 'Ticket medio',
+							data2: 'Ticket medio loja',
+							data3: 'Ticket medio marketplace',
+						},
+						type: 'area'
+					},
+					grid: {
+						x: {show: true },
+						y: {show: true }
+					},
+					axis: {
+				        x: {
+				            type: 'categorized',
+				            tick: {
+				                rotate: 90,
+				                multiline: false
+				            },
+				        }
+				    }
+				});
+
+			});
+		},
 		ordersQttPaymentTypeChart: function(day) {
 			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
 				columns= [];
@@ -694,29 +873,37 @@ try {
 			});
 		},
 		ordersQttUtmSourceChart: function(day) {
-			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {
-				columns= [];
-				for(var i in datajson.chartOrdersUtmSource) {
-					columns.push(new Array(i));
-				} 
-				
-				var index = 0;
-				for(var i in datajson.chartOrdersQttUtmSource) {
-					index = 0;
-					for(var j in datajson.chartOrdersUtmSource) {
-						var data = datajson.chartOrdersQttUtmSource[i][j];
-						if (data != undefined && data != null) 
-							columns[index].push(data);	
+			(day ? Common.ordersByDayRequest() : Common.ordersByMonthRequest()).done(function(datajson) {			
+				var columns = [datajson.chartOrdersLabel];
+				var lines;
+				var month;
+				for(var sourceName in datajson.gaChartOrdersUtmSource) {
+					lines = ["Google Analytics: "+sourceName];
+					for(var i in datajson.gaChartOrdersQttUtmSource){
+						month = datajson.gaChartOrdersQttUtmSource[i];
+						if (month[sourceName] != undefined && month[sourceName] != null) 
+							lines.push(month[sourceName]);
 						else
-							columns[index].push(null);	
-						index++;
-					} 
+							lines.push(null);
+					}
+					columns.push(lines)
 				}
 
-				columns.unshift(datajson.chartOrdersLabel);
+				for(var sourceName in datajson.chartOrdersUtmSource) {
+					lines = ["OMS: "+sourceName];
+					for(var i in datajson.chartOrdersQttUtmSource){
+						month = datajson.chartOrdersQttUtmSource[i];
+						if (month[sourceName] != undefined && month[sourceName] != null) 
+							lines.push(month[sourceName]);
+						else
+							lines.push(null);
+					}
+					columns.push(lines)
+				}
 
 				var chartLines = c3.generate({
 					bindto: (day ? '#orders-by-day-utm-source' : '#orders-by-month-utm-source'),
+				
 					data: {
 						x: 'x',
 						columns:columns ,
@@ -1022,6 +1209,7 @@ try {
 						oms.push(   ((localChartOrdersQtt[i] / datajson.gaSessions[i]) * 100).toFixed(2)   );
 						omsInvoiced.push(   ((localChartOrdersInvoicedQtt[i] / datajson.gaSessions[i]) * 100).toFixed(2)   );
 						ga.push(   ((datajson.gaTransactions[i] / datajson.gaSessions[i]) * 100).toFixed(2)   );
+
 					}
 					else {
 						oms.push(null);
